@@ -17,7 +17,8 @@ import {
   TeamOutlined,
   MenuOutlined,
   MoonOutlined,
-  SunOutlined
+  SunOutlined,
+  MedicineBoxOutlined
 } from '@ant-design/icons'
 import { useTheme } from '../../contexts/ThemeContext'
 import ThemeSettings from '../ThemeSettings'
@@ -93,18 +94,81 @@ const MainLayout: React.FC = () => {
             }
           },
           { 
-            key: 'archive/test-item', 
-            label: '检测项目', 
-            onClick: () => {
-              navigate('/archive/test-item')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
             key: 'archive/equipment', 
             label: '设备管理', 
             onClick: () => {
               navigate('/archive/equipment')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'archive/reagent', 
+            label: '试剂档案', 
+            onClick: () => {
+              navigate('/archive/reagent')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'archive/laboratory', 
+            label: '实验室列表', 
+            onClick: () => {
+              navigate('/archive/laboratory')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'archive/department', 
+            label: '科室列表', 
+            onClick: () => {
+              navigate('/archive/department')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'archive/experiment-group', 
+            label: '实验小组', 
+            onClick: () => {
+              navigate('/archive/experiment-group')
+              if (isMobile) setDrawerVisible(false)
+            }
+          }
+        ]
+      },
+      {
+        key: 'detection',
+        icon: <MedicineBoxOutlined />,
+        label: '检测项目',
+        children: [
+          { 
+            key: 'detection/test-item', 
+            label: '检测项目', 
+            onClick: () => {
+              navigate('/detection/test-item')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'detection/analysis-item', 
+            label: '分析项目', 
+            onClick: () => {
+              navigate('/detection/analysis-item')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'detection/methodology', 
+            label: '方法学', 
+            onClick: () => {
+              navigate('/detection/methodology')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'detection/sop-config', 
+            label: '检测项目SOP配置', 
+            onClick: () => {
+              navigate('/detection/sop-config')
               if (isMobile) setDrawerVisible(false)
             }
           }
@@ -156,6 +220,14 @@ const MainLayout: React.FC = () => {
         label: '实验流程',
         children: [
           { 
+            key: 'experiment/task-center', 
+            label: '实验任务', 
+            onClick: () => {
+              navigate('/experiment/task-center')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
             key: 'experiment/preprocessing', 
             label: '前处理', 
             onClick: () => {
@@ -172,10 +244,10 @@ const MainLayout: React.FC = () => {
             }
           },
           { 
-            key: 'experiment/batch-creation', 
-            label: '批次创建', 
+            key: 'experiment/pooling', 
+            label: '混样记录', 
             onClick: () => {
-              navigate('/experiment/batch-creation')
+              navigate('/experiment/pooling')
               if (isMobile) setDrawerVisible(false)
             }
           },
@@ -195,26 +267,18 @@ const MainLayout: React.FC = () => {
         label: '生信分析',
         children: [
           { 
+            key: 'analysis/tools', 
+            label: '分析工具', 
+            onClick: () => {
+              navigate('/analysis/tools')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
             key: 'analysis/tasks', 
             label: '分析任务', 
             onClick: () => {
               navigate('/analysis/tasks')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'analysis/pipelines', 
-            label: '分析流程', 
-            onClick: () => {
-              navigate('/analysis/pipelines')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'analysis/results', 
-            label: '分析结果', 
-            onClick: () => {
-              navigate('/analysis/results')
               if (isMobile) setDrawerVisible(false)
             }
           }
@@ -394,7 +458,7 @@ const MainLayout: React.FC = () => {
         placement="left"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
         width={240}
       >
         <SidebarMenu />

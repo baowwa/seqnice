@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
   Table, 
@@ -26,8 +27,15 @@ import {
   Tabs,
   List,
   Avatar,
-  Typography
-} from 'antd'
+  Typography,
+  Statistic,
+  Timeline,
+  Drawer,
+  Radio,
+  Popconfirm,
+  Empty,
+  Spin
+} from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
@@ -41,283 +49,264 @@ import {
   ClockCircleOutlined,
   WarningOutlined,
   FileTextOutlined,
-  SettingOutlined
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
-import type { TransferDirection } from 'antd/es/transfer'
-import dayjs from 'dayjs'
+  SettingOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
+  StopOutlined,
+  ReloadOutlined,
+  FilterOutlined,
+  SearchOutlined,
+  TeamOutlined,
+  ToolOutlined,
+  DashboardOutlined,
+  ProjectOutlined,
+  HistoryOutlined,
+  BellOutlined
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
+import type { TransferDirection } from 'antd/es/transfer';
+import dayjs from 'dayjs';
 
-const { Search } = Input
-const { Option } = Select
-const { TextArea } = Input
-const { Step } = Steps
-const { TabPane } = Tabs
-const { Text, Title } = Typography
+const { Search } = Input;
+const { Option } = Select;
+const { TextArea } = Input;
+const { Step } = Steps;
+const { TabPane } = Tabs;
+const { Text, Title } = Typography;
 
 /**
- * 批次状态类型
+ * 批次状态枚举
  */
-type BatchStatus = 'draft' | 'planning' | 'ready' | 'in_progress' | 'completed' | 'cancelled'
+type BatchStatus = 'draft' | 'planning' | 'ready' | 'in_progress' | 'completed' | 'cancelled' | 'paused';
 
 /**
- * 实验类型
+ * 实验类型枚举
  */
-type ExperimentType = 'preprocessing' | 'library_construction' | 'sequencing' | 'analysis'
+type ExperimentType = 'preprocessing' | 'library_construction' | 'sequencing' | 'analysis';
 
 /**
- * 样本信息接口
+ * 任务优先级枚举
+ */
+type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+/**
+ * 任务状态枚举
+ */
+type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
+
+/**
+ * 样本接口定义
  */
 interface Sample {
-  id: string
-  sampleCode: string
-  sampleName: string
-  sampleType: string
-  projectName: string
-  clientName: string
-  receivedDate: string
-  status: string
-  volume: number
-  concentration?: number
-  quality?: string
-  notes?: string
+  id: string;
+  sampleCode: string;
+  sampleName: string;
+  sampleType: string;
+  projectName: string;
+  clientName: string;
+  receivedDate: string;
+  status: string;
+  volume: number;
+  concentration?: number;
+  quality?: string;
+  notes?: string;
 }
 
 /**
- * 试剂信息接口
+ * 试剂接口定义
  */
 interface Reagent {
-  id: string
-  name: string
-  type: string
-  brand: string
-  catalogNumber: string
-  lotNumber: string
-  expiryDate: string
-  quantity: number
-  unit: string
-  storageCondition: string
-  cost: number
+  id: string;
+  name: string;
+  type: string;
+  brand: string;
+  catalogNumber: string;
+  lotNumber: string;
+  expiryDate: string;
+  quantity: number;
+  unit: string;
+  storageCondition: string;
+  cost: number;
 }
 
 /**
- * 设备信息接口
+ * 设备接口定义
  */
 interface Equipment {
-  id: string
-  name: string
-  model: string
-  type: string
-  status: string
-  location: string
-  capacity: number
-  currentLoad: number
-  nextAvailable: string
+  id: string;
+  name: string;
+  model: string;
+  type: string;
+  status: string;
+  location: string;
+  capacity: number;
+  currentLoad: number;
+  nextAvailable: string;
 }
 
 /**
- * 实验批次接口
+ * 实验批次接口定义
  */
 interface ExperimentBatch {
-  id: string
-  batchCode: string
-  batchName: string
-  experimentType: ExperimentType
-  status: BatchStatus
-  sampleCount: number
-  samples: Sample[]
-  reagents: Reagent[]
-  equipment: Equipment[]
-  operator: string
-  plannedStartDate: string
-  plannedEndDate: string
-  actualStartDate?: string
-  actualEndDate?: string
-  estimatedDuration: number
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-  notes?: string
-  createdBy: string
-  createdTime: string
-  updatedTime: string
-  protocol?: string
-  qualityRequirements?: string[]
-  costEstimate: number
-  progress: number
+  id: string;
+  batchCode: string;
+  batchName: string;
+  experimentType: ExperimentType;
+  status: BatchStatus;
+  sampleCount: number;
+  samples: Sample[];
+  reagents: Reagent[];
+  equipment: Equipment[];
+  operator: string;
+  plannedStartDate: string;
+  plannedEndDate: string;
+  actualStartDate?: string;
+  actualEndDate?: string;
+  estimatedDuration: number;
+  priority: TaskPriority;
+  notes?: string;
+  createdBy: string;
+  createdTime: string;
+  updatedTime: string;
+  protocol?: string;
+  qualityRequirements?: string[];
+  costEstimate: number;
+  progress: number;
 }
 
 /**
- * 实验批次创建页面组件
- * 
- * 功能特性：
- * - 样本选择和批次组织
- * - 试剂和设备资源分配
- * - 实验流程规划
- * - 批次进度跟踪
- * - 成本估算和资源优化
+ * 任务接口定义
  */
-const BatchCreation: React.FC = () => {
+interface Task {
+  id: string;
+  taskName: string;
+  taskType: ExperimentType;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignee: string;
+  batchId?: string;
+  batchName?: string;
+  sampleCount: number;
+  estimatedDuration: number;
+  actualDuration?: number;
+  startTime?: string;
+  endTime?: string;
+  progress: number;
+  notes?: string;
+  createdTime: string;
+  updatedTime: string;
+}
+
+/**
+ * 实验任务管理组件
+ * 实现任务中心+批次管理的双核心理念
+ * 支持任务调度、批次创建、执行监控等功能
+ */
+const ExperimentTaskManagement: React.FC = () => {
+  const navigate = useNavigate();
+  
   // 状态管理
-  const [loading, setLoading] = useState(false)
-  const [batchesData, setBatchesData] = useState<ExperimentBatch[]>([])
-  const [samplesData, setSamplesData] = useState<Sample[]>([])
-  const [reagentsData, setReagentsData] = useState<Reagent[]>([])
-  const [equipmentData, setEquipmentData] = useState<Equipment[]>([])
-  const [selectedBatch, setSelectedBatch] = useState<ExperimentBatch | null>(null)
-  const [createModalVisible, setCreateModalVisible] = useState(false)
-  const [detailModalVisible, setDetailModalVisible] = useState(false)
-  const [editingBatch, setEditingBatch] = useState<ExperimentBatch | null>(null)
-  const [currentStep, setCurrentStep] = useState(0)
-  const [selectedSamples, setSelectedSamples] = useState<string[]>([])
-  const [selectedReagents, setSelectedReagents] = useState<string[]>([])
-  const [selectedEquipment, setSelectedEquipment] = useState<string[]>([])
-  const [searchText, setSearchText] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [typeFilter, setTypeFilter] = useState<string>('')
-  const [form] = Form.useForm()
+  const [activeTab, setActiveTab] = useState<string>('taskCenter');
+  const [loading, setLoading] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [batches, setBatches] = useState<ExperimentBatch[]>([]);
+  const [samples, setSamples] = useState<Sample[]>([]);
+  const [reagents, setReagents] = useState<Reagent[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  
+  // 模态框状态
+  const [taskModalVisible, setTaskModalVisible] = useState(false);
+  const [batchModalVisible, setBatchModalVisible] = useState(false);
+  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
+  const [wizardModalVisible, setWizardModalVisible] = useState(false);
+  
+  // 选中项状态
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<ExperimentBatch | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingBatch, setEditingBatch] = useState<ExperimentBatch | null>(null);
+  
+  // 筛选状态
+  const [taskStatusFilter, setTaskStatusFilter] = useState<TaskStatus | ''>('');
+  const [batchStatusFilter, setBatchStatusFilter] = useState<BatchStatus | ''>('');
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | ''>('');
+  const [assigneeFilter, setAssigneeFilter] = useState<string>('');
+  const [searchText, setSearchText] = useState('');
+  
+  // 向导步骤
+  const [wizardStep, setWizardStep] = useState(0);
+  const [wizardData, setWizardData] = useState<any>({});
+  
+  // 表单实例
+  const [taskForm] = Form.useForm();
+  const [batchForm] = Form.useForm();
 
-  /**
-   * 模拟样本数据
-   */
-  const mockSamplesData: Sample[] = [
+  // 模拟数据
+  const mockTasks: Task[] = [
     {
       id: '1',
-      sampleCode: 'S001',
-      sampleName: '土壤样本A',
-      sampleType: '土壤',
-      projectName: '环境微生物多样性分析',
-      clientName: '环保局',
-      receivedDate: '2024-01-15',
-      status: 'received',
-      volume: 5.0,
-      concentration: 120.5,
-      quality: 'good',
-      notes: '样本状态良好'
+      taskName: '环境样本DNA提取',
+      taskType: 'preprocessing',
+      status: 'in_progress',
+      priority: 'high',
+      assignee: '张三',
+      batchId: 'BATCH001',
+      batchName: '环境样本前处理批次',
+      sampleCount: 24,
+      estimatedDuration: 480,
+      actualDuration: 320,
+      startTime: '2024-01-20 09:00:00',
+      progress: 67,
+      notes: '进展顺利，预计今日完成',
+      createdTime: '2024-01-19 16:00:00',
+      updatedTime: '2024-01-20 14:30:00'
     },
     {
       id: '2',
-      sampleCode: 'S002',
-      sampleName: '水体样本B',
-      sampleType: '水体',
-      projectName: '水质监测项目',
-      clientName: '水务局',
-      receivedDate: '2024-01-16',
-      status: 'received',
-      volume: 10.0,
-      concentration: 85.3,
-      quality: 'excellent'
+      taskName: '文库构建任务',
+      taskType: 'library_construction',
+      status: 'pending',
+      priority: 'medium',
+      assignee: '李四',
+      sampleCount: 12,
+      estimatedDuration: 360,
+      progress: 0,
+      notes: '等待前处理完成',
+      createdTime: '2024-01-20 10:00:00',
+      updatedTime: '2024-01-20 10:00:00'
     },
     {
       id: '3',
-      sampleCode: 'S003',
-      sampleName: '植物样本C',
-      sampleType: '植物',
-      projectName: '植物基因组研究',
-      clientName: '农科院',
-      receivedDate: '2024-01-17',
-      status: 'received',
-      volume: 3.5,
-      concentration: 95.8,
-      quality: 'good'
+      taskName: '上机测序',
+      taskType: 'sequencing',
+      status: 'completed',
+      priority: 'high',
+      assignee: '王五',
+      batchId: 'BATCH002',
+      batchName: '测序批次A',
+      sampleCount: 96,
+      estimatedDuration: 1440,
+      actualDuration: 1380,
+      startTime: '2024-01-18 08:00:00',
+      endTime: '2024-01-19 07:00:00',
+      progress: 100,
+      notes: '测序完成，数据质量良好',
+      createdTime: '2024-01-17 14:00:00',
+      updatedTime: '2024-01-19 07:30:00'
     }
-  ]
+  ];
 
-  /**
-   * 模拟试剂数据
-   */
-  const mockReagentsData: Reagent[] = [
+  const mockBatches: ExperimentBatch[] = [
     {
-      id: '1',
-      name: 'DNA提取试剂盒',
-      type: '提取试剂',
-      brand: 'QIAGEN',
-      catalogNumber: '69504',
-      lotNumber: 'LOT001',
-      expiryDate: '2024-12-31',
-      quantity: 50,
-      unit: '次',
-      storageCondition: '4°C',
-      cost: 25.0
-    },
-    {
-      id: '2',
-      name: 'PCR扩增试剂',
-      type: '扩增试剂',
-      brand: 'Thermo Fisher',
-      catalogNumber: 'K0171',
-      lotNumber: 'LOT002',
-      expiryDate: '2024-10-15',
-      quantity: 100,
-      unit: '反应',
-      storageCondition: '-20°C',
-      cost: 15.0
-    },
-    {
-      id: '3',
-      name: '文库构建试剂盒',
-      type: '文库试剂',
-      brand: 'Illumina',
-      catalogNumber: '20020595',
-      lotNumber: 'LOT003',
-      expiryDate: '2024-08-30',
-      quantity: 24,
-      unit: '样本',
-      storageCondition: '-20°C',
-      cost: 120.0
-    }
-  ]
-
-  /**
-   * 模拟设备数据
-   */
-  const mockEquipmentData: Equipment[] = [
-    {
-      id: '1',
-      name: '离心机A',
-      model: 'Centrifuge 5424R',
-      type: '离心机',
-      status: 'available',
-      location: '实验室A',
-      capacity: 24,
-      currentLoad: 0,
-      nextAvailable: '2024-01-20 09:00:00'
-    },
-    {
-      id: '2',
-      name: 'PCR仪B',
-      model: 'T100 Thermal Cycler',
-      type: 'PCR仪',
-      status: 'busy',
-      location: '实验室B',
-      capacity: 96,
-      currentLoad: 48,
-      nextAvailable: '2024-01-21 14:00:00'
-    },
-    {
-      id: '3',
-      name: '测序仪C',
-      model: 'NovaSeq 6000',
-      type: '测序仪',
-      status: 'available',
-      location: '测序中心',
-      capacity: 4,
-      currentLoad: 0,
-      nextAvailable: '2024-01-22 08:00:00'
-    }
-  ]
-
-  /**
-   * 模拟批次数据
-   */
-  const mockBatchesData: ExperimentBatch[] = [
-    {
-      id: '1',
+      id: 'BATCH001',
       batchCode: 'BATCH001',
       batchName: '环境样本前处理批次',
       experimentType: 'preprocessing',
       status: 'in_progress',
-      sampleCount: 12,
-      samples: mockSamplesData.slice(0, 2),
-      reagents: mockReagentsData.slice(0, 1),
-      equipment: mockEquipmentData.slice(0, 1),
+      sampleCount: 24,
+      samples: [],
+      reagents: [],
+      equipment: [],
       operator: '张三',
       plannedStartDate: '2024-01-20',
       plannedEndDate: '2024-01-22',
@@ -325,150 +314,351 @@ const BatchCreation: React.FC = () => {
       estimatedDuration: 48,
       priority: 'high',
       notes: '紧急项目，需要优先处理',
-      createdBy: '李四',
+      createdBy: '实验主管',
       createdTime: '2024-01-19 10:00:00',
       updatedTime: '2024-01-20 09:30:00',
       protocol: 'DNA提取标准流程v2.1',
       qualityRequirements: ['DNA浓度>50ng/μL', 'OD260/280比值1.8-2.0'],
       costEstimate: 1250.0,
-      progress: 65
+      progress: 67
+    },
+    {
+      id: 'BATCH002',
+      batchCode: 'BATCH002',
+      batchName: '测序批次A',
+      experimentType: 'sequencing',
+      status: 'completed',
+      sampleCount: 96,
+      samples: [],
+      reagents: [],
+      equipment: [],
+      operator: '王五',
+      plannedStartDate: '2024-01-18',
+      plannedEndDate: '2024-01-19',
+      actualStartDate: '2024-01-18',
+      actualEndDate: '2024-01-19',
+      estimatedDuration: 24,
+      priority: 'high',
+      notes: '测序完成，数据质量良好',
+      createdBy: '测序主管',
+      createdTime: '2024-01-17 14:00:00',
+      updatedTime: '2024-01-19 07:30:00',
+      protocol: 'NovaSeq测序标准流程',
+      qualityRequirements: ['Q30>85%', '数据产出>30Gb'],
+      costEstimate: 8500.0,
+      progress: 100
     }
-  ]
+  ];
 
-  /**
-   * 组件初始化
-   */
+  // 组件初始化
   useEffect(() => {
-    loadBatchesData()
-    loadSamplesData()
-    loadReagentsData()
-    loadEquipmentData()
-  }, [])
+    loadData();
+  }, []);
 
-  /**
-   * 加载批次数据
-   */
-  const loadBatchesData = async () => {
-    setLoading(true)
+  // 加载数据
+  const loadData = async () => {
+    setLoading(true);
     try {
       // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setBatchesData(mockBatchesData)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setTasks(mockTasks);
+      setBatches(mockBatches);
     } catch (error) {
-      message.error('加载批次数据失败')
+      message.error('加载数据失败');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  /**
-   * 加载样本数据
-   */
-  const loadSamplesData = async () => {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setSamplesData(mockSamplesData)
-    } catch (error) {
-      message.error('加载样本数据失败')
+  // 状态颜色映射
+  const getStatusColor = (status: TaskStatus | BatchStatus) => {
+    const colorMap = {
+      pending: 'orange',
+      in_progress: 'blue',
+      completed: 'green',
+      failed: 'red',
+      cancelled: 'gray',
+      paused: 'purple',
+      draft: 'default',
+      planning: 'cyan',
+      ready: 'lime'
+    };
+    return colorMap[status as keyof typeof colorMap];
+  };
+
+  // 状态文本映射
+  const getStatusText = (status: TaskStatus | BatchStatus) => {
+    const textMap = {
+      pending: '待执行',
+      in_progress: '执行中',
+      completed: '已完成',
+      failed: '失败',
+      cancelled: '已取消',
+      paused: '已暂停',
+      draft: '草稿',
+      planning: '计划中',
+      ready: '就绪'
+    };
+    return textMap[status as keyof typeof textMap];
+  };
+
+  // 优先级颜色映射
+  const getPriorityColor = (priority: TaskPriority) => {
+    const colorMap = {
+      low: 'green',
+      medium: 'orange',
+      high: 'red',
+      urgent: 'purple'
+    };
+    return colorMap[priority];
+  };
+
+  // 优先级文本映射
+  const getPriorityText = (priority: TaskPriority) => {
+    const textMap = {
+      low: '低',
+      medium: '中',
+      high: '高',
+      urgent: '紧急'
+    };
+    return textMap[priority];
+  };
+
+  // 实验类型文本映射
+  const getExperimentTypeText = (type: ExperimentType) => {
+    const textMap = {
+      preprocessing: '前处理',
+      library_construction: '文库构建',
+      sequencing: '上机测序',
+      analysis: '数据分析'
+    };
+    return textMap[type];
+  };
+
+  // 处理任务操作
+  const handleTaskAction = (action: string, task: Task) => {
+    switch (action) {
+      case 'start':
+        message.success(`任务 ${task.taskName} 已开始执行`);
+        break;
+      case 'pause':
+        message.success(`任务 ${task.taskName} 已暂停`);
+        break;
+      case 'resume':
+        message.success(`任务 ${task.taskName} 已恢复执行`);
+        break;
+      case 'complete':
+        message.success(`任务 ${task.taskName} 已完成`);
+        break;
+      case 'cancel':
+        message.success(`任务 ${task.taskName} 已取消`);
+        break;
+      default:
+        break;
     }
-  }
+  };
 
-  /**
-   * 加载试剂数据
-   */
-  const loadReagentsData = async () => {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setReagentsData(mockReagentsData)
-    } catch (error) {
-      message.error('加载试剂数据失败')
+  // 处理批次操作
+  const handleBatchAction = (action: string, batch: ExperimentBatch) => {
+    switch (action) {
+      case 'start':
+        message.success(`批次 ${batch.batchName} 已开始执行`);
+        break;
+      case 'pause':
+        message.success(`批次 ${batch.batchName} 已暂停`);
+        break;
+      case 'resume':
+        message.success(`批次 ${batch.batchName} 已恢复执行`);
+        break;
+      case 'complete':
+        message.success(`批次 ${batch.batchName} 已完成`);
+        break;
+      case 'cancel':
+        message.success(`批次 ${batch.batchName} 已取消`);
+        break;
+      case 'execute':
+        // 跳转到批次执行界面
+        navigate('/experiment/batch-execution', { 
+          state: { batchId: batch.id, batchCode: batch.batchCode } 
+        });
+        break;
+      default:
+        break;
     }
-  }
+  };
 
-  /**
-   * 加载设备数据
-   */
-  const loadEquipmentData = async () => {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setEquipmentData(mockEquipmentData)
-    } catch (error) {
-      message.error('加载设备数据失败')
+  // 任务中心统计数据
+  const taskStats = {
+    total: tasks.length,
+    pending: tasks.filter(t => t.status === 'pending').length,
+    inProgress: tasks.filter(t => t.status === 'in_progress').length,
+    completed: tasks.filter(t => t.status === 'completed').length,
+    failed: tasks.filter(t => t.status === 'failed').length
+  };
+
+  // 批次管理统计数据
+  const batchStats = {
+    total: batches.length,
+    draft: batches.filter(b => b.status === 'draft').length,
+    planning: batches.filter(b => b.status === 'planning').length,
+    inProgress: batches.filter(b => b.status === 'in_progress').length,
+    completed: batches.filter(b => b.status === 'completed').length
+  };
+
+  // 任务表格列定义
+  const taskColumns: ColumnsType<Task> = [
+    {
+      title: '任务名称',
+      dataIndex: 'taskName',
+      key: 'taskName',
+      width: 200,
+      ellipsis: true
+    },
+    {
+      title: '类型',
+      dataIndex: 'taskType',
+      key: 'taskType',
+      width: 100,
+      render: (type: ExperimentType) => (
+        <Tag color="blue">{getExperimentTypeText(type)}</Tag>
+      )
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (status: TaskStatus) => (
+        <Tag color={getStatusColor(status)}>
+          {getStatusText(status)}
+        </Tag>
+      )
+    },
+    {
+      title: '优先级',
+      dataIndex: 'priority',
+      key: 'priority',
+      width: 80,
+      render: (priority: TaskPriority) => (
+        <Tag color={getPriorityColor(priority)}>
+          {getPriorityText(priority)}
+        </Tag>
+      )
+    },
+    {
+      title: '执行人',
+      dataIndex: 'assignee',
+      key: 'assignee',
+      width: 100
+    },
+    {
+      title: '样本数',
+      dataIndex: 'sampleCount',
+      key: 'sampleCount',
+      width: 80,
+      align: 'center'
+    },
+    {
+      title: '进度',
+      dataIndex: 'progress',
+      key: 'progress',
+      width: 120,
+      render: (progress: number) => (
+        <Progress 
+          percent={progress} 
+          size="small" 
+          status={progress === 100 ? 'success' : 'active'}
+        />
+      )
+    },
+    {
+      title: '预计时长',
+      dataIndex: 'estimatedDuration',
+      key: 'estimatedDuration',
+      width: 100,
+      render: (duration: number) => `${Math.floor(duration / 60)}h${duration % 60}m`
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 200,
+      fixed: 'right',
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="查看详情">
+            <Button 
+              type="text" 
+              icon={<EyeOutlined />} 
+              onClick={() => {
+                setSelectedTask(record);
+                setDetailDrawerVisible(true);
+              }}
+            />
+          </Tooltip>
+          {record.status === 'pending' && (
+            <Tooltip title="开始执行">
+              <Button 
+                type="text" 
+                icon={<PlayCircleOutlined />} 
+                onClick={() => handleTaskAction('start', record)}
+              />
+            </Tooltip>
+          )}
+          {record.status === 'in_progress' && (
+            <Tooltip title="暂停">
+              <Button 
+                type="text" 
+                icon={<PauseCircleOutlined />} 
+                onClick={() => handleTaskAction('pause', record)}
+              />
+            </Tooltip>
+          )}
+          {record.status === 'paused' && (
+            <Tooltip title="恢复">
+              <Button 
+                type="text" 
+                icon={<PlayCircleOutlined />} 
+                onClick={() => handleTaskAction('resume', record)}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title="编辑">
+            <Button 
+              type="text" 
+              icon={<EditOutlined />} 
+              onClick={() => {
+                setEditingTask(record);
+                setTaskModalVisible(true);
+              }}
+            />
+          </Tooltip>
+          <Popconfirm
+            title="确定要取消这个任务吗？"
+            onConfirm={() => handleTaskAction('cancel', record)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Tooltip title="取消">
+              <Button 
+                type="text" 
+                danger 
+                icon={<StopOutlined />}
+              />
+            </Tooltip>
+          </Popconfirm>
+        </Space>
+      )
     }
-  }
+  ];
 
-  /**
-   * 筛选后的数据
-   */
-  const filteredData = batchesData.filter(batch => {
-    const matchesSearch = !searchText || 
-      batch.batchName.toLowerCase().includes(searchText.toLowerCase()) ||
-      batch.batchCode.toLowerCase().includes(searchText.toLowerCase()) ||
-      batch.operator.toLowerCase().includes(searchText.toLowerCase())
-    
-    const matchesStatus = !statusFilter || batch.status === statusFilter
-    const matchesType = !typeFilter || batch.experimentType === typeFilter
-    
-    return matchesSearch && matchesStatus && matchesType
-  })
-
-  /**
-   * 状态标签渲染
-   */
-  const renderStatusTag = (status: BatchStatus) => {
-    const statusConfig = {
-      draft: { color: 'default', text: '草稿' },
-      planning: { color: 'processing', text: '规划中' },
-      ready: { color: 'success', text: '就绪' },
-      in_progress: { color: 'processing', text: '进行中' },
-      completed: { color: 'success', text: '已完成' },
-      cancelled: { color: 'error', text: '已取消' }
-    }
-    
-    const config = statusConfig[status]
-    return <Tag color={config.color}>{config.text}</Tag>
-  }
-
-  /**
-   * 实验类型标签渲染
-   */
-  const renderTypeTag = (type: ExperimentType) => {
-    const typeConfig = {
-      preprocessing: { color: 'blue', text: '前处理' },
-      library_construction: { color: 'green', text: '文库构建' },
-      sequencing: { color: 'purple', text: '测序' },
-      analysis: { color: 'orange', text: '分析' }
-    }
-    
-    const config = typeConfig[type]
-    return <Tag color={config.color}>{config.text}</Tag>
-  }
-
-  /**
-   * 优先级标签渲染
-   */
-  const renderPriorityTag = (priority: string) => {
-    const priorityConfig = {
-      low: { color: 'default', text: '低' },
-      medium: { color: 'processing', text: '中' },
-      high: { color: 'warning', text: '高' },
-      urgent: { color: 'error', text: '紧急' }
-    }
-    
-    const config = priorityConfig[priority as keyof typeof priorityConfig]
-    return <Tag color={config.color}>{config.text}</Tag>
-  }
-
-  /**
-   * 表格列定义
-   */
-  const columns: ColumnsType<ExperimentBatch> = [
+  // 批次表格列定义
+  const batchColumns: ColumnsType<ExperimentBatch> = [
     {
       title: '批次编号',
       dataIndex: 'batchCode',
       key: 'batchCode',
       width: 120,
-      render: (text) => <Text strong>{text}</Text>
+      fixed: 'left'
     },
     {
       title: '批次名称',
@@ -482,48 +672,40 @@ const BatchCreation: React.FC = () => {
       dataIndex: 'experimentType',
       key: 'experimentType',
       width: 100,
-      render: renderTypeTag
+      render: (type: ExperimentType) => (
+        <Tag color="blue">{getExperimentTypeText(type)}</Tag>
+      )
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: renderStatusTag
+      render: (status: BatchStatus) => (
+        <Tag color={getStatusColor(status)}>
+          {getStatusText(status)}
+        </Tag>
+      )
     },
     {
-      title: '样本数量',
+      title: '样本数',
       dataIndex: 'sampleCount',
       key: 'sampleCount',
-      width: 100,
-      render: (count) => <Badge count={count} showZero color="blue" />
-    },
-    {
-      title: '优先级',
-      dataIndex: 'priority',
-      key: 'priority',
       width: 80,
-      render: renderPriorityTag
+      align: 'center'
     },
     {
-      title: '操作员',
+      title: '执行人',
       dataIndex: 'operator',
       key: 'operator',
       width: 100
-    },
-    {
-      title: '计划开始',
-      dataIndex: 'plannedStartDate',
-      key: 'plannedStartDate',
-      width: 120,
-      render: (date) => dayjs(date).format('MM-DD')
     },
     {
       title: '进度',
       dataIndex: 'progress',
       key: 'progress',
       width: 120,
-      render: (progress) => (
+      render: (progress: number) => (
         <Progress 
           percent={progress} 
           size="small" 
@@ -532,16 +714,22 @@ const BatchCreation: React.FC = () => {
       )
     },
     {
-      title: '成本估算',
-      dataIndex: 'costEstimate',
-      key: 'costEstimate',
-      width: 100,
-      render: (cost) => `¥${cost.toFixed(0)}`
+      title: '计划时间',
+      key: 'plannedTime',
+      width: 180,
+      render: (_, record) => (
+        <div>
+          <div>{record.plannedStartDate}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>
+            至 {record.plannedEndDate}
+          </div>
+        </div>
+      )
     },
     {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 200,
       fixed: 'right',
       render: (_, record) => (
         <Space size="small">
@@ -549,677 +737,1215 @@ const BatchCreation: React.FC = () => {
             <Button 
               type="text" 
               icon={<EyeOutlined />} 
-              onClick={() => handleViewDetail(record)}
+              onClick={() => {
+                setSelectedBatch(record);
+                setDetailDrawerVisible(true);
+              }}
             />
           </Tooltip>
+          {record.status === 'ready' && (
+            <Tooltip title="开始执行">
+              <Button 
+                type="text" 
+                icon={<PlayCircleOutlined />} 
+                onClick={() => handleBatchAction('start', record)}
+              />
+            </Tooltip>
+          )}
+          {record.status === 'in_progress' && (
+            <>
+              <Tooltip title="进入执行界面">
+                <Button 
+                  type="text" 
+                  icon={<DashboardOutlined />} 
+                  onClick={() => handleBatchAction('execute', record)}
+                />
+              </Tooltip>
+              <Tooltip title="暂停">
+                <Button 
+                  type="text" 
+                  icon={<PauseCircleOutlined />} 
+                  onClick={() => handleBatchAction('pause', record)}
+                />
+              </Tooltip>
+            </>
+          )}
           <Tooltip title="编辑">
             <Button 
               type="text" 
               icon={<EditOutlined />} 
-              onClick={() => handleEdit(record)}
+              onClick={() => {
+                setEditingBatch(record);
+                setBatchModalVisible(true);
+              }}
             />
           </Tooltip>
-          <Tooltip title="删除">
-            <Button 
-              type="text" 
-              danger 
-              icon={<DeleteOutlined />} 
-              onClick={() => handleDelete(record)}
-            />
-          </Tooltip>
+          <Popconfirm
+            title="确定要删除这个批次吗？"
+            onConfirm={() => handleBatchAction('cancel', record)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Tooltip title="删除">
+              <Button 
+                type="text" 
+                danger 
+                icon={<DeleteOutlined />}
+              />
+            </Tooltip>
+          </Popconfirm>
         </Space>
       )
     }
-  ]
-
-  /**
-   * 创建新批次
-   */
-  const handleCreate = () => {
-    setEditingBatch(null)
-    setCurrentStep(0)
-    setSelectedSamples([])
-    setSelectedReagents([])
-    setSelectedEquipment([])
-    form.resetFields()
-    setCreateModalVisible(true)
-  }
-
-  /**
-   * 编辑批次
-   */
-  const handleEdit = (batch: ExperimentBatch) => {
-    setEditingBatch(batch)
-    setSelectedSamples(batch.samples.map(s => s.id))
-    setSelectedReagents(batch.reagents.map(r => r.id))
-    setSelectedEquipment(batch.equipment.map(e => e.id))
-    form.setFieldsValue({
-      batchName: batch.batchName,
-      experimentType: batch.experimentType,
-      priority: batch.priority,
-      operator: batch.operator,
-      plannedStartDate: dayjs(batch.plannedStartDate),
-      plannedEndDate: dayjs(batch.plannedEndDate),
-      protocol: batch.protocol,
-      notes: batch.notes
-    })
-    setCreateModalVisible(true)
-  }
-
-  /**
-   * 查看详情
-   */
-  const handleViewDetail = (batch: ExperimentBatch) => {
-    setSelectedBatch(batch)
-    setDetailModalVisible(true)
-  }
-
-  /**
-   * 删除批次
-   */
-  const handleDelete = (batch: ExperimentBatch) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除批次 "${batch.batchName}" 吗？`,
-      onOk: async () => {
-        try {
-          // 模拟API调用
-          await new Promise(resolve => setTimeout(resolve, 500))
-          setBatchesData(prev => prev.filter(item => item.id !== batch.id))
-          message.success('删除成功')
-        } catch (error) {
-          message.error('删除失败')
-        }
-      }
-    })
-  }
-
-  /**
-   * 保存批次
-   */
-  const handleSave = async (values: any) => {
-    try {
-      // 验证必要字段
-      if (selectedSamples.length === 0) {
-        message.error('请至少选择一个样本')
-        return
-      }
-
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const selectedSampleObjects = samplesData.filter(s => selectedSamples.includes(s.id))
-      const selectedReagentObjects = reagentsData.filter(r => selectedReagents.includes(r.id))
-      const selectedEquipmentObjects = equipmentData.filter(e => selectedEquipment.includes(e.id))
-      
-      // 计算成本估算
-      const reagentCost = selectedReagentObjects.reduce((sum, r) => sum + r.cost, 0)
-      const costEstimate = reagentCost * selectedSamples.length
-      
-      if (editingBatch) {
-        // 更新
-        const updatedBatch: ExperimentBatch = {
-          ...editingBatch,
-          ...values,
-          samples: selectedSampleObjects,
-          reagents: selectedReagentObjects,
-          equipment: selectedEquipmentObjects,
-          sampleCount: selectedSamples.length,
-          costEstimate,
-          updatedTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-          plannedStartDate: values.plannedStartDate.format('YYYY-MM-DD'),
-          plannedEndDate: values.plannedEndDate.format('YYYY-MM-DD')
-        }
-        
-        setBatchesData(prev => prev.map(item => 
-          item.id === editingBatch.id ? updatedBatch : item
-        ))
-        message.success('更新成功')
-      } else {
-        // 新增
-        const newBatch: ExperimentBatch = {
-          id: Date.now().toString(),
-          batchCode: `BATCH${String(Date.now()).slice(-6)}`,
-          ...values,
-          samples: selectedSampleObjects,
-          reagents: selectedReagentObjects,
-          equipment: selectedEquipmentObjects,
-          sampleCount: selectedSamples.length,
-          status: 'draft' as BatchStatus,
-          costEstimate,
-          progress: 0,
-          createdBy: '当前用户',
-          createdTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-          updatedTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-          plannedStartDate: values.plannedStartDate.format('YYYY-MM-DD'),
-          plannedEndDate: values.plannedEndDate.format('YYYY-MM-DD')
-        }
-        
-        setBatchesData(prev => [...prev, newBatch])
-        message.success('创建成功')
-      }
-      
-      setCreateModalVisible(false)
-      form.resetFields()
-    } catch (error) {
-      message.error('保存失败')
-    }
-  }
-
-  /**
-   * 步骤切换
-   */
-  const handleStepChange = (step: number) => {
-    setCurrentStep(step)
-  }
-
-  /**
-   * 样本选择Transfer组件数据源
-   */
-  const sampleTransferData = samplesData.map(sample => ({
-    key: sample.id,
-    title: `${sample.sampleCode} - ${sample.sampleName}`,
-    description: `${sample.sampleType} | ${sample.projectName}`,
-    disabled: sample.status !== 'received'
-  }))
+  ];
 
   return (
     <div style={{ padding: '24px' }}>
-      {/* 页面标题和统计 */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>
-                {batchesData.length}
-              </div>
-              <div style={{ color: '#666', marginTop: 4 }}>总批次数</div>
-            </div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
-                {batchesData.filter(b => b.status === 'in_progress').length}
-              </div>
-              <div style={{ color: '#666', marginTop: 4 }}>进行中</div>
-            </div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#faad14' }}>
-                {batchesData.filter(b => b.status === 'ready').length}
-              </div>
-              <div style={{ color: '#666', marginTop: 4 }}>待开始</div>
-            </div>
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card size="small">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#722ed1' }}>
-                {batchesData.reduce((sum, b) => sum + b.sampleCount, 0)}
-              </div>
-              <div style={{ color: '#666', marginTop: 4 }}>总样本数</div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 搜索和操作栏 */}
-      <Card size="small" style={{ marginBottom: 16 }}>
+      {/* 页面标题 */}
+      <Card style={{ marginBottom: 24 }}>
         <Row gutter={16} align="middle">
-          <Col span={6}>
-            <Search
-              placeholder="搜索批次名称、编号或操作员"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onSearch={loadBatchesData}
-            />
+          <Col span={12}>
+            <Title level={2} style={{ margin: 0 }}>
+              <ExperimentOutlined style={{ marginRight: 8 }} />
+              实验任务管理
+            </Title>
+            <Text type="secondary">
+              📋 任务中心 + 批次管理 | 智能调度 | 实时监控
+            </Text>
           </Col>
-          <Col span={3}>
-            <Select
-              placeholder="状态筛选"
-              value={statusFilter}
-              onChange={setStatusFilter}
-              allowClear
-              style={{ width: '100%' }}
-            >
-              <Option value="draft">草稿</Option>
-              <Option value="planning">规划中</Option>
-              <Option value="ready">就绪</Option>
-              <Option value="in_progress">进行中</Option>
-              <Option value="completed">已完成</Option>
-              <Option value="cancelled">已取消</Option>
-            </Select>
-          </Col>
-          <Col span={3}>
-            <Select
-              placeholder="实验类型"
-              value={typeFilter}
-              onChange={setTypeFilter}
-              allowClear
-              style={{ width: '100%' }}
-            >
-              <Option value="preprocessing">前处理</Option>
-              <Option value="library_construction">文库构建</Option>
-              <Option value="sequencing">测序</Option>
-              <Option value="analysis">分析</Option>
-            </Select>
-          </Col>
-          <Col span={8}>
+          <Col span={12} style={{ textAlign: 'right' }}>
             <Space>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                创建批次
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={() => setTaskModalVisible(true)}
+              >
+                新建任务
               </Button>
-              <Button onClick={loadBatchesData} loading={loading}>
-                刷新数据
+              <Button 
+                type="primary" 
+                icon={<ExperimentOutlined />}
+                onClick={() => setWizardModalVisible(true)}
+                style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+              >
+                批次向导
               </Button>
             </Space>
           </Col>
         </Row>
       </Card>
 
-      {/* 批次列表 */}
-      <Card title="实验批次列表" size="small">
-        <Table
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 1600 }}
-          pagination={{
-            total: filteredData.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`
-          }}
-        />
-      </Card>
+      {/* 主要内容区域 */}
+      <Tabs 
+        activeKey={activeTab} 
+        onChange={setActiveTab}
+        size="large"
+        tabBarStyle={{ marginBottom: 24 }}
+      >
+        {/* 任务中心 */}
+        <TabPane 
+          tab={
+            <span>
+              <DashboardOutlined />
+              任务中心
+              <Badge count={taskStats.inProgress} style={{ marginLeft: 8 }} />
+            </span>
+          } 
+          key="taskCenter"
+        >
+          {/* 任务统计 */}
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="总任务数"
+                  value={taskStats.total}
+                  prefix={<ProjectOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="待执行"
+                  value={taskStats.pending}
+                  valueStyle={{ color: '#faad14' }}
+                  prefix={<ClockCircleOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="执行中"
+                  value={taskStats.inProgress}
+                  valueStyle={{ color: '#1890ff' }}
+                  prefix={<PlayCircleOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="已完成"
+                  value={taskStats.completed}
+                  valueStyle={{ color: '#52c41a' }}
+                  prefix={<CheckCircleOutlined />}
+                />
+              </Card>
+            </Col>
+          </Row>
 
-      {/* 创建/编辑批次模态框 */}
+          {/* 任务筛选 */}
+          <Card style={{ marginBottom: 24 }}>
+            <Row gutter={16}>
+              <Col span={6}>
+                <Search
+                  placeholder="搜索任务名称"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  allowClear
+                />
+              </Col>
+              <Col span={4}>
+                <Select
+                  placeholder="任务状态"
+                  value={taskStatusFilter}
+                  onChange={setTaskStatusFilter}
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="pending">待执行</Option>
+                  <Option value="in_progress">执行中</Option>
+                  <Option value="completed">已完成</Option>
+                  <Option value="failed">失败</Option>
+                  <Option value="cancelled">已取消</Option>
+                </Select>
+              </Col>
+              <Col span={4}>
+                <Select
+                  placeholder="优先级"
+                  value={priorityFilter}
+                  onChange={setPriorityFilter}
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="urgent">紧急</Option>
+                  <Option value="high">高</Option>
+                  <Option value="medium">中</Option>
+                  <Option value="low">低</Option>
+                </Select>
+              </Col>
+              <Col span={4}>
+                <Select
+                  placeholder="执行人"
+                  value={assigneeFilter}
+                  onChange={setAssigneeFilter}
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="张三">张三</Option>
+                  <Option value="李四">李四</Option>
+                  <Option value="王五">王五</Option>
+                </Select>
+              </Col>
+              <Col span={6}>
+                <Space>
+                  <Button 
+                    icon={<ReloadOutlined />}
+                    onClick={loadData}
+                  >
+                    刷新
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setSearchText('');
+                      setTaskStatusFilter('');
+                      setPriorityFilter('');
+                      setAssigneeFilter('');
+                    }}
+                  >
+                    重置筛选
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+          </Card>
+
+          {/* 任务列表 */}
+          <Card title="任务列表">
+            <Table
+              columns={taskColumns}
+              dataSource={tasks}
+              rowKey="id"
+              loading={loading}
+              scroll={{ x: 1200 }}
+              pagination={{
+                total: tasks.length,
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => 
+                  `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
+              }}
+            />
+          </Card>
+        </TabPane>
+
+        {/* 批次管理 */}
+        <TabPane 
+          tab={
+            <span>
+              <ToolOutlined />
+              批次管理
+              <Badge count={batchStats.inProgress} style={{ marginLeft: 8 }} />
+            </span>
+          } 
+          key="batchManagement"
+        >
+          {/* 批次统计 */}
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="总批次数"
+                  value={batchStats.total}
+                  prefix={<ExperimentOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="计划中"
+                  value={batchStats.planning}
+                  valueStyle={{ color: '#722ed1' }}
+                  prefix={<CalendarOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="执行中"
+                  value={batchStats.inProgress}
+                  valueStyle={{ color: '#1890ff' }}
+                  prefix={<PlayCircleOutlined />}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="已完成"
+                  value={batchStats.completed}
+                  valueStyle={{ color: '#52c41a' }}
+                  prefix={<CheckCircleOutlined />}
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          {/* 批次筛选 */}
+          <Card style={{ marginBottom: 24 }}>
+            <Row gutter={16}>
+              <Col span={6}>
+                <Search
+                  placeholder="搜索批次名称或编号"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  allowClear
+                />
+              </Col>
+              <Col span={4}>
+                <Select
+                  placeholder="批次状态"
+                  value={batchStatusFilter}
+                  onChange={setBatchStatusFilter}
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="draft">草稿</Option>
+                  <Option value="planning">计划中</Option>
+                  <Option value="ready">就绪</Option>
+                  <Option value="in_progress">执行中</Option>
+                  <Option value="completed">已完成</Option>
+                  <Option value="cancelled">已取消</Option>
+                </Select>
+              </Col>
+              <Col span={4}>
+                <Select
+                  placeholder="实验类型"
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="preprocessing">前处理</Option>
+                  <Option value="library_construction">文库构建</Option>
+                  <Option value="sequencing">上机测序</Option>
+                  <Option value="analysis">数据分析</Option>
+                </Select>
+              </Col>
+              <Col span={4}>
+                <Select
+                  placeholder="执行人"
+                  allowClear
+                  style={{ width: '100%' }}
+                >
+                  <Option value="张三">张三</Option>
+                  <Option value="李四">李四</Option>
+                  <Option value="王五">王五</Option>
+                </Select>
+              </Col>
+              <Col span={6}>
+                <Space>
+                  <Button 
+                    icon={<ReloadOutlined />}
+                    onClick={loadData}
+                  >
+                    刷新
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setSearchText('');
+                      setBatchStatusFilter('');
+                    }}
+                  >
+                    重置筛选
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+          </Card>
+
+          {/* 批次列表 */}
+          <Card title="批次列表">
+            <Table
+              columns={batchColumns}
+              dataSource={batches}
+              rowKey="id"
+              loading={loading}
+              scroll={{ x: 1400 }}
+              pagination={{
+                total: batches.length,
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => 
+                  `第 ${range[0]}-${range[1]} 条/共 ${total} 条`
+              }}
+            />
+          </Card>
+        </TabPane>
+
+        {/* 执行监控 */}
+        <TabPane 
+          tab={
+            <span>
+              <BellOutlined />
+              执行监控
+            </span>
+          } 
+          key="monitoring"
+        >
+          <Row gutter={16}>
+            <Col span={16}>
+              <Card title="实时任务状态" style={{ marginBottom: 16 }}>
+                <Timeline>
+                  <Timeline.Item color="blue">
+                    <p>09:30 - 环境样本DNA提取任务开始执行</p>
+                    <p style={{ color: '#666', fontSize: '12px' }}>执行人：张三 | 预计完成时间：18:00</p>
+                  </Timeline.Item>
+                  <Timeline.Item color="green">
+                    <p>08:15 - 测序批次A已完成</p>
+                    <p style={{ color: '#666', fontSize: '12px' }}>执行人：王五 | 实际用时：23小时</p>
+                  </Timeline.Item>
+                  <Timeline.Item color="orange">
+                    <p>07:45 - 文库构建任务等待中</p>
+                    <p style={{ color: '#666', fontSize: '12px' }}>等待前处理完成</p>
+                  </Timeline.Item>
+                </Timeline>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card title="设备状态" style={{ marginBottom: 16 }}>
+                <List
+                  size="small"
+                  dataSource={[
+                    { name: '离心机A', status: 'available', color: 'green' },
+                    { name: 'PCR仪B', status: 'busy', color: 'red' },
+                    { name: '测序仪C', status: 'available', color: 'green' }
+                  ]}
+                  renderItem={item => (
+                    <List.Item>
+                      <List.Item.Meta
+                        avatar={<Badge status={item.color as any} />}
+                        title={item.name}
+                        description={item.status === 'available' ? '空闲' : '使用中'}
+                      />
+                    </List.Item>
+                  )}
+                />
+              </Card>
+              <Card title="今日统计">
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>完成任务</span>
+                    <span style={{ fontWeight: 'bold' }}>3个</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>处理样本</span>
+                    <span style={{ fontWeight: 'bold' }}>132个</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>设备利用率</span>
+                    <span style={{ fontWeight: 'bold' }}>85%</span>
+                  </div>
+                </Space>
+              </Card>
+            </Col>
+          </Row>
+        </TabPane>
+      </Tabs>
+
+      {/* 详情抽屉 */}
+      <Drawer
+        title={selectedTask ? "任务详情" : "批次详情"}
+        placement="right"
+        width={600}
+        open={detailDrawerVisible}
+        onClose={() => setDetailDrawerVisible(false)}
+      >
+        {selectedTask && (
+          <div>
+            <Descriptions title="基本信息" bordered column={1}>
+              <Descriptions.Item label="任务名称">{selectedTask.taskName}</Descriptions.Item>
+              <Descriptions.Item label="任务类型">
+                <Tag color="blue">{getExperimentTypeText(selectedTask.taskType)}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="状态">
+                <Tag color={getStatusColor(selectedTask.status)}>
+                  {getStatusText(selectedTask.status)}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="优先级">
+                <Tag color={getPriorityColor(selectedTask.priority)}>
+                  {getPriorityText(selectedTask.priority)}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="执行人">{selectedTask.assignee}</Descriptions.Item>
+              <Descriptions.Item label="样本数量">{selectedTask.sampleCount}个</Descriptions.Item>
+              <Descriptions.Item label="进度">
+                <Progress percent={selectedTask.progress} />
+              </Descriptions.Item>
+            </Descriptions>
+            {selectedTask.notes && (
+              <Card title="备注信息" style={{ marginTop: 16 }}>
+                <p>{selectedTask.notes}</p>
+              </Card>
+            )}
+          </div>
+        )}
+        {selectedBatch && (
+          <div>
+            <Descriptions title="基本信息" bordered column={1}>
+              <Descriptions.Item label="批次编号">{selectedBatch.batchCode}</Descriptions.Item>
+              <Descriptions.Item label="批次名称">{selectedBatch.batchName}</Descriptions.Item>
+              <Descriptions.Item label="实验类型">
+                <Tag color="blue">{getExperimentTypeText(selectedBatch.experimentType)}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="状态">
+                <Tag color={getStatusColor(selectedBatch.status)}>
+                  {getStatusText(selectedBatch.status)}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="执行人">{selectedBatch.operator}</Descriptions.Item>
+              <Descriptions.Item label="样本数量">{selectedBatch.sampleCount}个</Descriptions.Item>
+              <Descriptions.Item label="进度">
+                <Progress percent={selectedBatch.progress} />
+              </Descriptions.Item>
+              <Descriptions.Item label="成本预估">¥{selectedBatch.costEstimate}</Descriptions.Item>
+            </Descriptions>
+            {selectedBatch.notes && (
+              <Card title="备注信息" style={{ marginTop: 16 }}>
+                <p>{selectedBatch.notes}</p>
+              </Card>
+            )}
+          </div>
+        )}
+      </Drawer>
+
+      {/* 批次创建向导模态框 */}
       <Modal
-        title={editingBatch ? '编辑实验批次' : '创建实验批次'}
-        open={createModalVisible}
-        onCancel={() => setCreateModalVisible(false)}
+        title="批次创建向导"
+        open={wizardModalVisible}
+        onCancel={() => {
+          setWizardModalVisible(false);
+          setWizardStep(0);
+          setWizardData({});
+        }}
         footer={null}
         width={1000}
         destroyOnClose
       >
-        <Steps current={currentStep} style={{ marginBottom: 24 }}>
-          <Step title="基本信息" icon={<FileTextOutlined />} />
-          <Step title="样本选择" icon={<BarcodeOutlined />} />
-          <Step title="资源配置" icon={<SettingOutlined />} />
-          <Step title="确认创建" icon={<CheckCircleOutlined />} />
+        <Steps current={wizardStep} style={{ marginBottom: 24 }}>
+          <Step title="基本信息" />
+          <Step title="选择样本" />
+          <Step title="配置资源" />
+          <Step title="确认创建" />
         </Steps>
-
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSave}
-        >
+        
+        <div style={{ minHeight: 500 }}>
           {/* 步骤1: 基本信息 */}
-          {currentStep === 0 && (
-            <div>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="batchName"
-                    label="批次名称"
-                    rules={[{ required: true, message: '请输入批次名称' }]}
+          {wizardStep === 0 && (
+            <Card title="批次基本信息" style={{ margin: '0 auto', maxWidth: 600 }}>
+              <Form layout="vertical">
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="批次编号" required>
+                      <Input 
+                        placeholder="自动生成" 
+                        value={`BATCH_${dayjs().format('YYYYMMDD')}_${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`}
+                        disabled
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="批次名称" required>
+                      <Input 
+                        placeholder="请输入批次名称"
+                        value={wizardData.batchName || ''}
+                        onChange={(e) => setWizardData({...wizardData, batchName: e.target.value})}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="实验类型" required>
+                      <Select 
+                        placeholder="选择实验类型"
+                        value={wizardData.experimentType}
+                        onChange={(value) => setWizardData({...wizardData, experimentType: value})}
+                      >
+                        <Option value="preprocessing">样本前处理</Option>
+                        <Option value="library_construction">文库构建</Option>
+                        <Option value="sequencing">测序</Option>
+                        <Option value="analysis">数据分析</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="优先级" required>
+                      <Select 
+                        placeholder="选择优先级"
+                        value={wizardData.priority}
+                        onChange={(value) => setWizardData({...wizardData, priority: value})}
+                      >
+                        <Option value="urgent">
+                          <Tag color="red">紧急</Tag>
+                        </Option>
+                        <Option value="high">
+                          <Tag color="orange">高</Tag>
+                        </Option>
+                        <Option value="medium">
+                          <Tag color="blue">中</Tag>
+                        </Option>
+                        <Option value="low">
+                          <Tag color="green">低</Tag>
+                        </Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+                
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item label="执行人员" required>
+                      <Select 
+                        placeholder="选择执行人员"
+                        value={wizardData.operator}
+                        onChange={(value) => setWizardData({...wizardData, operator: value})}
+                      >
+                        <Option value="张三">张三</Option>
+                        <Option value="李四">李四</Option>
+                        <Option value="王五">王五</Option>
+                        <Option value="赵六">赵六</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item label="计划开始日期" required>
+                      <DatePicker 
+                        style={{ width: '100%' }}
+                        placeholder="选择开始日期"
+                        value={wizardData.plannedStartDate ? dayjs(wizardData.plannedStartDate) : null}
+                        onChange={(date) => setWizardData({...wizardData, plannedStartDate: date?.format('YYYY-MM-DD')})}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+                
+                <Form.Item label="实验协议">
+                  <Select 
+                    placeholder="选择实验协议"
+                    value={wizardData.protocol}
+                    onChange={(value) => setWizardData({...wizardData, protocol: value})}
                   >
-                    <Input placeholder="请输入批次名称" />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="experimentType"
-                    label="实验类型"
-                    rules={[{ required: true, message: '请选择实验类型' }]}
-                  >
-                    <Select placeholder="请选择实验类型">
-                      <Option value="preprocessing">前处理</Option>
-                      <Option value="library_construction">文库构建</Option>
-                      <Option value="sequencing">测序</Option>
-                      <Option value="analysis">分析</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="priority"
-                    label="优先级"
-                    rules={[{ required: true, message: '请选择优先级' }]}
-                  >
-                    <Select placeholder="请选择优先级">
-                      <Option value="low">低</Option>
-                      <Option value="medium">中</Option>
-                      <Option value="high">高</Option>
-                      <Option value="urgent">紧急</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="operator"
-                    label="操作员"
-                    rules={[{ required: true, message: '请输入操作员' }]}
-                  >
-                    <Input placeholder="请输入操作员姓名" />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="plannedStartDate"
-                    label="计划开始日期"
-                    rules={[{ required: true, message: '请选择计划开始日期' }]}
-                  >
-                    <DatePicker style={{ width: '100%' }} />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="plannedEndDate"
-                    label="计划结束日期"
-                    rules={[{ required: true, message: '请选择计划结束日期' }]}
-                  >
-                    <DatePicker style={{ width: '100%' }} />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Form.Item
-                name="protocol"
-                label="实验协议"
-              >
-                <Input placeholder="请输入实验协议名称或版本" />
-              </Form.Item>
-              <Form.Item
-                name="notes"
-                label="备注"
-              >
-                <TextArea rows={3} placeholder="请输入备注信息" />
-              </Form.Item>
-            </div>
+                    <Option value="DNA提取标准流程v2.1">DNA提取标准流程v2.1</Option>
+                    <Option value="RNA提取标准流程v1.5">RNA提取标准流程v1.5</Option>
+                    <Option value="文库构建标准流程v3.0">文库构建标准流程v3.0</Option>
+                    <Option value="NovaSeq测序标准流程">NovaSeq测序标准流程</Option>
+                  </Select>
+                </Form.Item>
+                
+                <Form.Item label="备注信息">
+                  <TextArea 
+                    rows={3}
+                    placeholder="请输入备注信息"
+                    value={wizardData.notes || ''}
+                    onChange={(e) => setWizardData({...wizardData, notes: e.target.value})}
+                  />
+                </Form.Item>
+              </Form>
+              
+              <div style={{ textAlign: 'right', marginTop: 24 }}>
+                <Button 
+                  type="primary" 
+                  onClick={() => setWizardStep(1)}
+                  disabled={!wizardData.batchName || !wizardData.experimentType || !wizardData.operator}
+                >
+                  下一步：选择样本
+                </Button>
+              </div>
+            </Card>
           )}
-
-          {/* 步骤2: 样本选择 */}
-          {currentStep === 1 && (
+          
+          {/* 步骤2: 选择样本 */}
+          {wizardStep === 1 && (
             <div>
               <Alert
                 message="样本选择"
-                description="从已接收的样本中选择需要进行实验的样本。只有状态为'已接收'的样本可以被选择。"
+                description="从可用样本中选择需要处理的样本，支持批量选择和搜索筛选"
                 type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
               />
-              <Transfer
-                dataSource={sampleTransferData}
-                targetKeys={selectedSamples}
-                onChange={setSelectedSamples}
-                render={item => item.title}
-                titles={['可选样本', '已选样本']}
-                listStyle={{
-                  width: 400,
-                  height: 400,
-                }}
-                showSearch
-                searchPlaceholder="搜索样本"
-              />
-              <div style={{ marginTop: 16 }}>
-                <Text strong>已选择样本数量: {selectedSamples.length}</Text>
+              
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Card title="可用样本" size="small">
+                    <div style={{ marginBottom: 16 }}>
+                      <Search 
+                        placeholder="搜索样本编号或名称"
+                        allowClear
+                        style={{ marginBottom: 8 }}
+                      />
+                      <Space>
+                        <Select placeholder="样本类型" style={{ width: 120 }}>
+                          <Option value="DNA">DNA</Option>
+                          <Option value="RNA">RNA</Option>
+                          <Option value="蛋白质">蛋白质</Option>
+                        </Select>
+                        <Select placeholder="项目" style={{ width: 120 }}>
+                          <Option value="项目A">项目A</Option>
+                          <Option value="项目B">项目B</Option>
+                          <Option value="项目C">项目C</Option>
+                        </Select>
+                      </Space>
+                    </div>
+                    
+                    <List
+                      size="small"
+                      dataSource={[
+                        { id: 'S001', name: '环境样本1', type: 'DNA', project: '项目A', status: '可用' },
+                        { id: 'S002', name: '环境样本2', type: 'DNA', project: '项目A', status: '可用' },
+                        { id: 'S003', name: '血液样本1', type: 'RNA', project: '项目B', status: '可用' },
+                        { id: 'S004', name: '血液样本2', type: 'RNA', project: '项目B', status: '可用' },
+                        { id: 'S005', name: '组织样本1', type: '蛋白质', project: '项目C', status: '可用' }
+                      ]}
+                      renderItem={(item) => (
+                        <List.Item
+                          actions={[
+                            <Button 
+                              size="small" 
+                              type="link"
+                              onClick={() => {
+                                const selected = wizardData.selectedSamples || [];
+                                if (!selected.find(s => s.id === item.id)) {
+                                  setWizardData({
+                                    ...wizardData, 
+                                    selectedSamples: [...selected, item]
+                                  });
+                                }
+                              }}
+                            >
+                              添加
+                            </Button>
+                          ]}
+                        >
+                          <List.Item.Meta
+                            avatar={<Avatar icon={<BarcodeOutlined />} />}
+                            title={`${item.id} - ${item.name}`}
+                            description={
+                              <Space>
+                                <Tag color="blue">{item.type}</Tag>
+                                <Tag color="green">{item.project}</Tag>
+                                <Tag color="orange">{item.status}</Tag>
+                              </Space>
+                            }
+                          />
+                        </List.Item>
+                      )}
+                      style={{ maxHeight: 300, overflow: 'auto' }}
+                    />
+                  </Card>
+                </Col>
+                
+                <Col span={12}>
+                  <Card title={`已选样本 (${(wizardData.selectedSamples || []).length})`} size="small">
+                    {(wizardData.selectedSamples || []).length === 0 ? (
+                      <Empty 
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description="暂未选择样本"
+                      />
+                    ) : (
+                      <List
+                        size="small"
+                        dataSource={wizardData.selectedSamples || []}
+                        renderItem={(item) => (
+                          <List.Item
+                            actions={[
+                              <Button 
+                                size="small" 
+                                type="link" 
+                                danger
+                                onClick={() => {
+                                  const selected = wizardData.selectedSamples || [];
+                                  setWizardData({
+                                    ...wizardData,
+                                    selectedSamples: selected.filter(s => s.id !== item.id)
+                                  });
+                                }}
+                              >
+                                移除
+                              </Button>
+                            ]}
+                          >
+                            <List.Item.Meta
+                              avatar={<Avatar icon={<BarcodeOutlined />} />}
+                              title={`${item.id} - ${item.name}`}
+                              description={
+                                <Space>
+                                  <Tag color="blue">{item.type}</Tag>
+                                  <Tag color="green">{item.project}</Tag>
+                                </Space>
+                              }
+                            />
+                          </List.Item>
+                        )}
+                        style={{ maxHeight: 300, overflow: 'auto' }}
+                      />
+                    )}
+                  </Card>
+                </Col>
+              </Row>
+              
+              <div style={{ textAlign: 'right', marginTop: 24 }}>
+                <Space>
+                  <Button onClick={() => setWizardStep(0)}>上一步</Button>
+                  <Button 
+                    type="primary" 
+                    onClick={() => setWizardStep(2)}
+                    disabled={!(wizardData.selectedSamples || []).length}
+                  >
+                    下一步：配置资源
+                  </Button>
+                </Space>
               </div>
             </div>
           )}
-
-          {/* 步骤3: 资源配置 */}
-          {currentStep === 2 && (
-            <div>
-              <Tabs defaultActiveKey="reagents">
-                <TabPane tab="试剂配置" key="reagents">
-                  <List
-                    dataSource={reagentsData}
-                    renderItem={reagent => (
-                      <List.Item
-                        actions={[
-                          <Checkbox
-                            checked={selectedReagents.includes(reagent.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedReagents([...selectedReagents, reagent.id])
-                              } else {
-                                setSelectedReagents(selectedReagents.filter(id => id !== reagent.id))
-                              }
-                            }}
-                          >
-                            选择
-                          </Checkbox>
-                        ]}
-                      >
-                        <List.Item.Meta
-                          title={reagent.name}
-                          description={
-                            <div>
-                              <div>品牌: {reagent.brand} | 货号: {reagent.catalogNumber}</div>
-                              <div>批号: {reagent.lotNumber} | 有效期: {reagent.expiryDate}</div>
-                              <div>库存: {reagent.quantity} {reagent.unit} | 单价: ¥{reagent.cost}</div>
-                            </div>
-                          }
-                        />
-                      </List.Item>
-                    )}
-                  />
-                </TabPane>
-                <TabPane tab="设备配置" key="equipment">
-                  <List
-                    dataSource={equipmentData}
-                    renderItem={equipment => (
-                      <List.Item
-                        actions={[
-                          <Checkbox
-                            checked={selectedEquipment.includes(equipment.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedEquipment([...selectedEquipment, equipment.id])
-                              } else {
-                                setSelectedEquipment(selectedEquipment.filter(id => id !== equipment.id))
-                              }
-                            }}
-                            disabled={equipment.status !== 'available'}
-                          >
-                            选择
-                          </Checkbox>
-                        ]}
-                      >
-                        <List.Item.Meta
-                          avatar={<Avatar icon={<ExperimentOutlined />} />}
-                          title={
-                            <div>
-                              {equipment.name}
-                              <Tag color={equipment.status === 'available' ? 'green' : 'red'} style={{ marginLeft: 8 }}>
-                                {equipment.status === 'available' ? '可用' : '忙碌'}
-                              </Tag>
-                            </div>
-                          }
-                          description={
-                            <div>
-                              <div>型号: {equipment.model} | 位置: {equipment.location}</div>
-                              <div>容量: {equipment.capacity} | 当前负载: {equipment.currentLoad}</div>
-                              <div>下次可用: {equipment.nextAvailable}</div>
-                            </div>
-                          }
-                        />
-                      </List.Item>
-                    )}
-                  />
-                </TabPane>
-              </Tabs>
-            </div>
-          )}
-
-          {/* 步骤4: 确认创建 */}
-          {currentStep === 3 && (
+          
+          {/* 步骤3: 配置资源 */}
+          {wizardStep === 2 && (
             <div>
               <Alert
-                message="批次信息确认"
-                description="请确认以下批次信息无误后提交创建。"
-                type="success"
+                message="资源配置"
+                description="为批次配置所需的试剂、设备等实验资源"
+                type="info"
                 showIcon
                 style={{ marginBottom: 16 }}
               />
-              <Descriptions bordered column={2}>
-                <Descriptions.Item label="批次名称">
-                  {form.getFieldValue('batchName')}
-                </Descriptions.Item>
-                <Descriptions.Item label="实验类型">
-                  {form.getFieldValue('experimentType')}
-                </Descriptions.Item>
-                <Descriptions.Item label="优先级">
-                  {form.getFieldValue('priority')}
-                </Descriptions.Item>
-                <Descriptions.Item label="操作员">
-                  {form.getFieldValue('operator')}
-                </Descriptions.Item>
-                <Descriptions.Item label="计划开始">
-                  {form.getFieldValue('plannedStartDate')?.format('YYYY-MM-DD')}
-                </Descriptions.Item>
-                <Descriptions.Item label="计划结束">
-                  {form.getFieldValue('plannedEndDate')?.format('YYYY-MM-DD')}
-                </Descriptions.Item>
-                <Descriptions.Item label="样本数量">
-                  {selectedSamples.length} 个
-                </Descriptions.Item>
-                <Descriptions.Item label="试剂数量">
-                  {selectedReagents.length} 种
-                </Descriptions.Item>
-                <Descriptions.Item label="设备数量">
-                  {selectedEquipment.length} 台
-                </Descriptions.Item>
-                <Descriptions.Item label="成本估算">
-                  ¥{(reagentsData.filter(r => selectedReagents.includes(r.id)).reduce((sum, r) => sum + r.cost, 0) * selectedSamples.length).toFixed(2)}
-                </Descriptions.Item>
-              </Descriptions>
+              
+              <Tabs defaultActiveKey="reagents">
+                <TabPane tab="试剂配置" key="reagents">
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Card title="可用试剂" size="small">
+                        <List
+                          size="small"
+                          dataSource={[
+                            { id: 'R001', name: 'DNA提取试剂盒', brand: 'Qiagen', lot: 'LOT001', expiry: '2024-12-31', quantity: 50 },
+                            { id: 'R002', name: 'PCR扩增试剂', brand: 'Thermo', lot: 'LOT002', expiry: '2024-10-15', quantity: 100 },
+                            { id: 'R003', name: '文库构建试剂盒', brand: 'Illumina', lot: 'LOT003', expiry: '2024-11-20', quantity: 25 }
+                          ]}
+                          renderItem={(item) => (
+                            <List.Item
+                              actions={[
+                                <Button 
+                                  size="small" 
+                                  type="link"
+                                  onClick={() => {
+                                    const selected = wizardData.selectedReagents || [];
+                                    if (!selected.find(r => r.id === item.id)) {
+                                      setWizardData({
+                                        ...wizardData, 
+                                        selectedReagents: [...selected, {...item, usedQuantity: 1}]
+                                      });
+                                    }
+                                  }}
+                                >
+                                  添加
+                                </Button>
+                              ]}
+                            >
+                              <List.Item.Meta
+                                title={item.name}
+                                description={
+                                  <div>
+                                    <div>品牌: {item.brand} | 批号: {item.lot}</div>
+                                    <div>有效期: {item.expiry} | 库存: {item.quantity}</div>
+                                  </div>
+                                }
+                              />
+                            </List.Item>
+                          )}
+                        />
+                      </Card>
+                    </Col>
+                    
+                    <Col span={12}>
+                      <Card title="已选试剂" size="small">
+                        {(wizardData.selectedReagents || []).length === 0 ? (
+                          <Empty 
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description="暂未选择试剂"
+                          />
+                        ) : (
+                          <List
+                            size="small"
+                            dataSource={wizardData.selectedReagents || []}
+                            renderItem={(item) => (
+                              <List.Item
+                                actions={[
+                                  <Button 
+                                    size="small" 
+                                    type="link" 
+                                    danger
+                                    onClick={() => {
+                                      const selected = wizardData.selectedReagents || [];
+                                      setWizardData({
+                                        ...wizardData,
+                                        selectedReagents: selected.filter(r => r.id !== item.id)
+                                      });
+                                    }}
+                                  >
+                                    移除
+                                  </Button>
+                                ]}
+                              >
+                                <List.Item.Meta
+                                  title={item.name}
+                                  description={
+                                    <div>
+                                      <div>用量: 
+                                        <InputNumber 
+                                          size="small" 
+                                          min={1} 
+                                          max={item.quantity}
+                                          value={item.usedQuantity}
+                                          onChange={(value) => {
+                                            const selected = wizardData.selectedReagents || [];
+                                            const updated = selected.map(r => 
+                                              r.id === item.id ? {...r, usedQuantity: value} : r
+                                            );
+                                            setWizardData({...wizardData, selectedReagents: updated});
+                                          }}
+                                          style={{ width: 60, margin: '0 8px' }}
+                                        />
+                                        / {item.quantity}
+                                      </div>
+                                    </div>
+                                  }
+                                />
+                              </List.Item>
+                            )}
+                          />
+                        )}
+                      </Card>
+                    </Col>
+                  </Row>
+                </TabPane>
+                
+                <TabPane tab="设备配置" key="equipment">
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Card title="可用设备" size="small">
+                        <List
+                          size="small"
+                          dataSource={[
+                            { id: 'E001', name: 'PCR仪A', model: 'ABI 9700', status: '空闲', capacity: 96, location: '实验室A' },
+                            { id: 'E002', name: '测序仪B', model: 'NovaSeq 6000', status: '空闲', capacity: 384, location: '测序中心' },
+                            { id: 'E003', name: '离心机C', model: 'Eppendorf 5424R', status: '使用中', capacity: 24, location: '实验室B' }
+                          ]}
+                          renderItem={(item) => (
+                            <List.Item
+                              actions={[
+                                <Button 
+                                  size="small" 
+                                  type="link"
+                                  disabled={item.status === '使用中'}
+                                  onClick={() => {
+                                    const selected = wizardData.selectedEquipment || [];
+                                    if (!selected.find(e => e.id === item.id)) {
+                                      setWizardData({
+                                        ...wizardData, 
+                                        selectedEquipment: [...selected, item]
+                                      });
+                                    }
+                                  }}
+                                >
+                                  {item.status === '使用中' ? '不可用' : '添加'}
+                                </Button>
+                              ]}
+                            >
+                              <List.Item.Meta
+                                title={item.name}
+                                description={
+                                  <div>
+                                    <div>型号: {item.model} | 位置: {item.location}</div>
+                                    <div>
+                                      状态: <Tag color={item.status === '空闲' ? 'green' : 'red'}>{item.status}</Tag>
+                                      容量: {item.capacity}
+                                    </div>
+                                  </div>
+                                }
+                              />
+                            </List.Item>
+                          )}
+                        />
+                      </Card>
+                    </Col>
+                    
+                    <Col span={12}>
+                      <Card title="已选设备" size="small">
+                        {(wizardData.selectedEquipment || []).length === 0 ? (
+                          <Empty 
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description="暂未选择设备"
+                          />
+                        ) : (
+                          <List
+                            size="small"
+                            dataSource={wizardData.selectedEquipment || []}
+                            renderItem={(item) => (
+                              <List.Item
+                                actions={[
+                                  <Button 
+                                    size="small" 
+                                    type="link" 
+                                    danger
+                                    onClick={() => {
+                                      const selected = wizardData.selectedEquipment || [];
+                                      setWizardData({
+                                        ...wizardData,
+                                        selectedEquipment: selected.filter(e => e.id !== item.id)
+                                      });
+                                    }}
+                                  >
+                                    移除
+                                  </Button>
+                                ]}
+                              >
+                                <List.Item.Meta
+                                  title={item.name}
+                                  description={`${item.model} - ${item.location}`}
+                                />
+                              </List.Item>
+                            )}
+                          />
+                        )}
+                      </Card>
+                    </Col>
+                  </Row>
+                </TabPane>
+              </Tabs>
+              
+              <div style={{ textAlign: 'right', marginTop: 24 }}>
+                <Space>
+                  <Button onClick={() => setWizardStep(1)}>上一步</Button>
+                  <Button 
+                    type="primary" 
+                    onClick={() => setWizardStep(3)}
+                  >
+                    下一步：确认创建
+                  </Button>
+                </Space>
+              </div>
             </div>
           )}
-
-          {/* 步骤导航 */}
-          <div style={{ marginTop: 24, textAlign: 'right' }}>
-            <Space>
-              {currentStep > 0 && (
-                <Button onClick={() => handleStepChange(currentStep - 1)}>
-                  上一步
-                </Button>
-              )}
-              {currentStep < 3 && (
-                <Button type="primary" onClick={() => handleStepChange(currentStep + 1)}>
-                  下一步
-                </Button>
-              )}
-              {currentStep === 3 && (
-                <Button type="primary" htmlType="submit" loading={loading}>
-                  {editingBatch ? '更新批次' : '创建批次'}
-                </Button>
-              )}
-              <Button onClick={() => setCreateModalVisible(false)}>
-                取消
-              </Button>
-            </Space>
-          </div>
-        </Form>
-      </Modal>
-
-      {/* 批次详情模态框 */}
-      <Modal
-        title="批次详情"
-        open={detailModalVisible}
-        onCancel={() => setDetailModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setDetailModalVisible(false)}>
-            关闭
-          </Button>
-        ]}
-        width={800}
-      >
-        {selectedBatch && (
-          <Tabs defaultActiveKey="basic">
-            <TabPane tab="基本信息" key="basic">
-              <Descriptions bordered column={2}>
-                <Descriptions.Item label="批次编号">{selectedBatch.batchCode}</Descriptions.Item>
-                <Descriptions.Item label="批次名称">{selectedBatch.batchName}</Descriptions.Item>
-                <Descriptions.Item label="实验类型">{renderTypeTag(selectedBatch.experimentType)}</Descriptions.Item>
-                <Descriptions.Item label="状态">{renderStatusTag(selectedBatch.status)}</Descriptions.Item>
-                <Descriptions.Item label="优先级">{renderPriorityTag(selectedBatch.priority)}</Descriptions.Item>
-                <Descriptions.Item label="操作员">{selectedBatch.operator}</Descriptions.Item>
-                <Descriptions.Item label="样本数量">{selectedBatch.sampleCount}</Descriptions.Item>
-                <Descriptions.Item label="进度">{selectedBatch.progress}%</Descriptions.Item>
-                <Descriptions.Item label="计划开始">{selectedBatch.plannedStartDate}</Descriptions.Item>
-                <Descriptions.Item label="计划结束">{selectedBatch.plannedEndDate}</Descriptions.Item>
-                <Descriptions.Item label="成本估算">¥{selectedBatch.costEstimate.toFixed(2)}</Descriptions.Item>
-                <Descriptions.Item label="创建时间">{selectedBatch.createdTime}</Descriptions.Item>
-                <Descriptions.Item label="备注" span={2}>{selectedBatch.notes || '无'}</Descriptions.Item>
-              </Descriptions>
-            </TabPane>
-            <TabPane tab="样本清单" key="samples">
-              <Table
-                dataSource={selectedBatch.samples}
-                columns={[
-                  { title: '样本编号', dataIndex: 'sampleCode', key: 'sampleCode' },
-                  { title: '样本名称', dataIndex: 'sampleName', key: 'sampleName' },
-                  { title: '样本类型', dataIndex: 'sampleType', key: 'sampleType' },
-                  { title: '项目名称', dataIndex: 'projectName', key: 'projectName' },
-                  { title: '体积', dataIndex: 'volume', key: 'volume', render: (vol) => `${vol} mL` },
-                  { title: '浓度', dataIndex: 'concentration', key: 'concentration', render: (conc) => conc ? `${conc} ng/μL` : '-' }
-                ]}
-                rowKey="id"
-                size="small"
-                pagination={false}
+          
+          {/* 步骤4: 确认创建 */}
+          {wizardStep === 3 && (
+            <div>
+              <Alert
+                message="批次信息确认"
+                description="请仔细核对批次信息，确认无误后点击创建批次"
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
               />
-            </TabPane>
-            <TabPane tab="资源配置" key="resources">
-              <div>
-                <Title level={5}>试剂清单</Title>
-                <List
-                  dataSource={selectedBatch.reagents}
-                  renderItem={reagent => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={reagent.name}
-                        description={`${reagent.brand} | ${reagent.catalogNumber} | 批号: ${reagent.lotNumber}`}
-                      />
-                      <div>¥{reagent.cost}</div>
-                    </List.Item>
-                  )}
-                />
+              
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Card title="基本信息" size="small">
+                    <Descriptions column={1} size="small">
+                      <Descriptions.Item label="批次名称">{wizardData.batchName}</Descriptions.Item>
+                      <Descriptions.Item label="实验类型">
+                        <Tag color="blue">{getExperimentTypeText(wizardData.experimentType)}</Tag>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="优先级">
+                        <Tag color={getPriorityColor(wizardData.priority)}>
+                          {getPriorityText(wizardData.priority)}
+                        </Tag>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="执行人员">{wizardData.operator}</Descriptions.Item>
+                      <Descriptions.Item label="计划开始">{wizardData.plannedStartDate}</Descriptions.Item>
+                      <Descriptions.Item label="实验协议">{wizardData.protocol}</Descriptions.Item>
+                    </Descriptions>
+                  </Card>
+                  
+                  <Card title="成本预估" size="small" style={{ marginTop: 16 }}>
+                    <Statistic
+                      title="预估总成本"
+                      value={2500}
+                      precision={2}
+                      prefix="¥"
+                      valueStyle={{ color: '#3f8600' }}
+                    />
+                    <div style={{ marginTop: 16 }}>
+                      <Text type="secondary">
+                        • 试剂成本: ¥1,200<br/>
+                        • 设备使用费: ¥800<br/>
+                        • 人工成本: ¥500
+                      </Text>
+                    </div>
+                  </Card>
+                </Col>
                 
-                <Divider />
-                
-                <Title level={5}>设备清单</Title>
-                <List
-                  dataSource={selectedBatch.equipment}
-                  renderItem={equipment => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={equipment.name}
-                        description={`${equipment.model} | ${equipment.location}`}
-                      />
-                      <Tag color="green">可用</Tag>
-                    </List.Item>
-                  )}
-                />
+                <Col span={12}>
+                  <Card title={`样本清单 (${(wizardData.selectedSamples || []).length}个)`} size="small">
+                    <List
+                      size="small"
+                      dataSource={wizardData.selectedSamples || []}
+                      renderItem={(item) => (
+                        <List.Item>
+                          <List.Item.Meta
+                            avatar={<Avatar size="small" icon={<BarcodeOutlined />} />}
+                            title={`${item.id} - ${item.name}`}
+                            description={
+                              <Space>
+                                <Tag color="blue">{item.type}</Tag>
+                                <Tag color="green">{item.project}</Tag>
+                              </Space>
+                            }
+                          />
+                        </List.Item>
+                      )}
+                      style={{ maxHeight: 200, overflow: 'auto' }}
+                    />
+                  </Card>
+                  
+                  <Card title="资源配置" size="small" style={{ marginTop: 16 }}>
+                    <div>
+                      <Text strong>试剂 ({(wizardData.selectedReagents || []).length}种):</Text>
+                      <div style={{ marginLeft: 16, marginTop: 8 }}>
+                        {(wizardData.selectedReagents || []).map(reagent => (
+                          <div key={reagent.id}>
+                            <Text>{reagent.name} × {reagent.usedQuantity}</Text>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <Divider style={{ margin: '12px 0' }} />
+                    
+                    <div>
+                      <Text strong>设备 ({(wizardData.selectedEquipment || []).length}台):</Text>
+                      <div style={{ marginLeft: 16, marginTop: 8 }}>
+                        {(wizardData.selectedEquipment || []).map(equipment => (
+                          <div key={equipment.id}>
+                            <Text>{equipment.name} ({equipment.model})</Text>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+              
+              <div style={{ textAlign: 'right', marginTop: 24 }}>
+                <Space>
+                  <Button onClick={() => setWizardStep(2)}>上一步</Button>
+                  <Button 
+                    type="primary" 
+                    size="large"
+                    onClick={() => {
+                      // 创建批次逻辑
+                      const newBatch = {
+                        id: `BATCH_${Date.now()}`,
+                        batchCode: `BATCH_${dayjs().format('YYYYMMDD')}_${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+                        batchName: wizardData.batchName,
+                        experimentType: wizardData.experimentType,
+                        status: 'draft' as BatchStatus,
+                        sampleCount: (wizardData.selectedSamples || []).length,
+                        samples: wizardData.selectedSamples || [],
+                        reagents: wizardData.selectedReagents || [],
+                        equipment: wizardData.selectedEquipment || [],
+                        operator: wizardData.operator,
+                        plannedStartDate: wizardData.plannedStartDate,
+                        plannedEndDate: dayjs(wizardData.plannedStartDate).add(3, 'day').format('YYYY-MM-DD'),
+                        estimatedDuration: 72,
+                        priority: wizardData.priority,
+                        notes: wizardData.notes,
+                        createdBy: '当前用户',
+                        createdTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                        updatedTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                        protocol: wizardData.protocol,
+                        qualityRequirements: ['样本质量合格', '操作规范'],
+                        costEstimate: 2500.0,
+                        progress: 0
+                      };
+                      
+                      setBatches([...batches, newBatch]);
+                      message.success('批次创建成功！');
+                      setWizardModalVisible(false);
+                      setWizardStep(0);
+                      setWizardData({});
+                      setActiveTab('batchManagement');
+                    }}
+                  >
+                    <CheckCircleOutlined />
+                    创建批次
+                  </Button>
+                </Space>
               </div>
-            </TabPane>
-          </Tabs>
-        )}
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
-  )
-}
+  );
+};
 
-export default BatchCreation
+export default ExperimentTaskManagement;

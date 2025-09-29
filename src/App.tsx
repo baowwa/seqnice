@@ -6,15 +6,23 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import MainLayout from './components/Layout/MainLayout'
 import './index.css'
 
-// 懒加载页面组件
+// 懒加载组件导入
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const SampleManagement = lazy(() => import('./pages/Sample'))
 const SampleTracking = lazy(() => import('./pages/Sample/SampleTracking'))
 const SampleStorage = lazy(() => import('./pages/Sample/SampleStorage'))
 const ExperimentManagement = lazy(() => import('./pages/Experiment'))
+const ExperimentTaskCenter = lazy(() => import('./pages/Experiment/ExperimentTaskCenter'))
 const Preprocessing = lazy(() => import('./pages/Experiment/Preprocessing'))
 const LibraryConstruction = lazy(() => import('./pages/Experiment/LibraryConstruction'))
+const SequencingTaskCenter = lazy(() => import('./pages/Experiment/SequencingTaskCenter'))
+const PoolingTaskCenter = lazy(() => import('./pages/Experiment/PoolingTaskCenter'))
 const BatchCreation = lazy(() => import('./pages/Experiment/BatchCreation'))
+const BatchExecution = lazy(() => import('./pages/Experiment/BatchExecution'))
+const BatchDetail = lazy(() => import('./pages/Experiment/BatchDetail'))
+const NucleicExtractionRecord = lazy(() => import('./pages/Experiment/NucleicExtractionRecord'))
+const PCRAmplificationRecord = lazy(() => import('./pages/Experiment/PCRAmplificationRecord'))
+const LibraryConstructionRecord = lazy(() => import('./pages/Experiment/LibraryConstructionRecord'))
 const ReportManagement = lazy(() => import('./pages/Report'))
 const ReportGeneration = lazy(() => import('./pages/Report/ReportGeneration'))
 const ReportReview = lazy(() => import('./pages/Report/ReportReview'))
@@ -22,8 +30,7 @@ const UserManagement = lazy(() => import('./pages/User'))
 const ArchiveManagement = lazy(() => import('./pages/Archive'))
 const ProjectManagement = lazy(() => import('./pages/Project'))
 const AnalysisManagement = lazy(() => import('./pages/Analysis'))
-const AnalysisPipeline = lazy(() => import('./pages/Analysis/AnalysisPipeline'))
-const AnalysisResults = lazy(() => import('./pages/Analysis/AnalysisResults'))
+const DetectionManagement = lazy(() => import('./pages/Detection'))
 
 /**
  * 加载中组件
@@ -82,6 +89,16 @@ const AppWithTheme: React.FC = () => {
                 } 
               />
               
+              {/* 检测项目路由 */}
+              <Route 
+                path="detection/*" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <DetectionManagement />
+                  </Suspense>
+                } 
+              />
+              
               {/* 项目管理路由 */}
               <Route 
                 path="project" 
@@ -120,6 +137,14 @@ const AppWithTheme: React.FC = () => {
               
               {/* 实验流程路由 */}
               <Route 
+                path="experiment/task-center" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ExperimentTaskCenter />
+                  </Suspense>
+                } 
+              />
+              <Route 
                 path="experiment/preprocessing" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
@@ -136,6 +161,14 @@ const AppWithTheme: React.FC = () => {
                 } 
               />
               <Route 
+                path="experiment/pooling" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PoolingTaskCenter />
+                  </Suspense>
+                } 
+              />
+              <Route 
                 path="experiment/batch-creation" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
@@ -144,36 +177,62 @@ const AppWithTheme: React.FC = () => {
                 } 
               />
               <Route 
+                path="experiment/batch-execution" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <BatchExecution />
+                  </Suspense>
+                } 
+              />
+              <Route 
                 path="experiment/sequencing" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
-                    <ExperimentManagement />
+                    <SequencingTaskCenter />
+                  </Suspense>
+                } 
+              />
+              
+              {/* 实验步骤记录路由 */}
+              <Route 
+                path="experiment/batch-detail/:batchId" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <BatchDetail />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="experiment/nucleic-extraction/:batchId" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <NucleicExtractionRecord />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="experiment/pcr-amplification/:batchId" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <PCRAmplificationRecord />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="experiment/library-construction/:batchId" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <LibraryConstructionRecord />
                   </Suspense>
                 } 
               />
               
               {/* 生信分析路由 */}
               <Route 
-                path="analysis/tasks" 
+                path="analysis/*" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <AnalysisManagement />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="analysis/pipelines" 
-                element={
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <AnalysisPipeline />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="analysis/results" 
-                element={
-                  <Suspense fallback={<LoadingSpinner />}>
-                    <AnalysisResults />
                   </Suspense>
                 } 
               />
