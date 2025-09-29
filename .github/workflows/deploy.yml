@@ -39,6 +39,6 @@ jobs:
       run: |
         npm install -g surge
         cd dist
-        surge . arkone-seqnice.surge.sh --token ${{ secrets.SURGE_TOKEN }}
+        surge . seqnice.surge.sh --token ${{ secrets.SURGE_TOKEN }}
       env:
         SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
