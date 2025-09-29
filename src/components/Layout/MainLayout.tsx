@@ -227,22 +227,22 @@ const MainLayout: React.FC = () => {
               if (isMobile) setDrawerVisible(false)
             }
           },
-          { 
-            key: 'experiment/preprocessing', 
-            label: '前处理', 
-            onClick: () => {
-              navigate('/experiment/preprocessing')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'experiment/library', 
-            label: '文库构建', 
-            onClick: () => {
-              navigate('/experiment/library')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
+          // { 
+          //   key: 'experiment/preprocessing', 
+          //   label: '前处理', 
+          //   onClick: () => {
+          //     navigate('/experiment/preprocessing')
+          //     if (isMobile) setDrawerVisible(false)
+          //   }
+          // },
+          // { 
+          //   key: 'experiment/library', 
+          //   label: '文库构建', 
+          //   onClick: () => {
+          //     navigate('/experiment/library')
+          //     if (isMobile) setDrawerVisible(false)
+          //   }
+          // },
           { 
             key: 'experiment/pooling', 
             label: '混样记录', 
