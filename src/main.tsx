@@ -14,7 +14,7 @@ dayjs.locale('zh-cn')
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ConfigProvider locale={zhCN}>
-      <BrowserRouter>
+      <BrowserRouter basename="/seqnice">
         <App />
       </BrowserRouter>
     </ConfigProvider>
