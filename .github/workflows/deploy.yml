@@ -3,8 +3,17 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+
+# 设置权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 确保只有一个部署任务同时运行
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -26,19 +35,14 @@ jobs:
     - name: Build 🏗️
       run: npm run build
       
-    - name: Deploy to GitHub Pages 🚀
-      uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    - name: Setup Pages 📄
+      uses: actions/configure-pages@v4
+      
+    - name: Upload artifact 📤
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
+        path: './dist'
         
-    # 可选：同时部署到Surge.sh
-    - name: Deploy to Surge.sh 🌊
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-      run: |
-        npm install -g surge
-        cd dist
-        surge . seqnice.surge.sh --token ${{ secrets.SURGE_TOKEN }}
-      env:
-        SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+    - name: Deploy to GitHub Pages 🚀
+      id: deployment
+      uses: actions/deploy-pages@v4
