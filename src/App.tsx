@@ -28,7 +28,7 @@ const ReportGeneration = lazy(() => import('./pages/Report/ReportGeneration'))
 const ReportReview = lazy(() => import('./pages/Report/ReportReview'))
 const UserManagement = lazy(() => import('./pages/User'))
 const ArchiveManagement = lazy(() => import('./pages/Archive'))
-const ProjectManagement = lazy(() => import('./pages/Project'))
+const ProjectManagement = lazy(() => import('./pages/Project/ProjectManagement'))
 const AnalysisManagement = lazy(() => import('./pages/Analysis'))
 const DetectionManagement = lazy(() => import('./pages/Detection'))
 
@@ -101,7 +101,7 @@ const AppWithTheme: React.FC = () => {
               
               {/* 项目管理路由 */}
               <Route 
-                path="project" 
+                path="project/*" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <ProjectManagement />

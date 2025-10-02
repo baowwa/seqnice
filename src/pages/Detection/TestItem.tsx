@@ -386,13 +386,13 @@ const TestItemManagement: React.FC = () => {
   }
 
   // 表格列定义
-  // 表格列定义
   const columns: ColumnsType<TestItem> = [
     {
       title: '项目名称',
       dataIndex: 'name',
       key: 'name',
       width: 150,
+      ellipsis: true,
       render: (text: string, record: TestItem) => (
         <div>
           <div style={{ fontWeight: 'bold' }}>{text}</div>
@@ -405,6 +405,7 @@ const TestItemManagement: React.FC = () => {
       dataIndex: 'category',
       key: 'category',
       width: 120,
+      ellipsis: true,
       render: (category: string) => <Tag color="blue">{category}</Tag>
     },
     {
@@ -426,6 +427,7 @@ const TestItemManagement: React.FC = () => {
       dataIndex: 'sampleTypes',
       key: 'sampleTypes',
       width: 150,
+      ellipsis: true,
       render: (sampleTypes: string[]) => (
         <div>
           {sampleTypes.slice(0, 2).map(type => (

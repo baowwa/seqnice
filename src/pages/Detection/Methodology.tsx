@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   Table, 
   Button, 
@@ -12,7 +12,6 @@ import {
   Card, 
   Tag, 
   Tooltip,
-  InputNumber,
   Switch,
   Upload,
   Divider,
@@ -22,7 +21,13 @@ import {
   List,
   Typography,
   Collapse,
-  Steps
+  Steps,
+  Row,
+  Col,
+  Checkbox,
+  InputNumber,
+  Radio,
+  Tabs
 } from 'antd'
 import { 
   PlusOutlined, 
@@ -37,615 +42,421 @@ import {
   SettingOutlined,
   SafetyCertificateOutlined,
   FileProtectOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  ReloadOutlined,
+  ExportOutlined,
+  ImportOutlined,
+  CopyOutlined,
+  StopOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined
 } from '@ant-design/icons'
+import type { ColumnsType } from 'antd/es/table'
+import { 
+  Methodology, 
+  MethodologyStatus, 
+  MethodologyCategory, 
+  DetectionType, 
+  TechnologyPlatform,
+  ExperimentStep,
+  PerformanceIndicator,
+  EquipmentType,
+  ReagentType
+} from '../../types'
 
 const { Option } = Select
 const { TextArea } = Input
-const { Text } = Typography
+const { Text, Title } = Typography
 const { Panel } = Collapse
 const { Step } = Steps
-
-/**
- * 技术参数接口
- */
-interface TechnicalParameters {
-  throughput?: string
-  sensitivity: string
-  specificity: string
-  precision: string
-  accuracy: string
-  linearRange?: string
-  detectionLimit?: string
-  reportableRange?: string
-  cvRequirement?: number
-  biasRequirement?: number
-}
-
-/**
- * 仪器要求接口
- */
-interface InstrumentRequirements {
-  mainInstruments: string[]
-  auxiliaryInstruments: string[]
-  calibrationRequirements: string
-  maintenanceSchedule: string
-  environmentalConditions: {
-    temperature: string
-    humidity: string
-    ventilation: string
-  }
-}
-
-/**
- * 样本要求接口
- */
-interface SampleRequirements {
-  sampleTypes: string[]
-  minimumVolume: string
-  qualityRequirements: string
-  storageConditions: string
-  transportRequirements: string
-  pretreatmentSteps?: string[]
-}
-
-/**
- * SOP文档接口
- */
-interface SOPDocument {
-  id: string
-  name: string
-  version: string
-  type: 'procedure' | 'quality' | 'safety' | 'maintenance'
-  uploadDate: string
-  fileUrl: string
-  approver: string
-  status: 'draft' | 'approved' | 'expired'
-}
-
-/**
- * 方法学接口定义
- */
-interface Methodology {
-  id: string
-  name: string
-  code: string
-  category: string
-  principle: string
-  status: 'active' | 'pending' | 'inactive'
-  technicalParameters: TechnicalParameters
-  instrumentRequirements: InstrumentRequirements
-  sampleRequirements: SampleRequirements
-  associatedDetectionItems?: string[]
-  procedureSteps: string[]
-  qualityControl: string
-  resultInterpretation: string
-  limitations: string
-  references: string[]
-  sopDocuments?: SOPDocument[]
-  version: string
-  effectiveDate: string
-  reviewDate: string
-  approver: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
+const { TabPane } = Tabs
 
 /**
  * 方法学管理组件
- * 提供方法学的增删改查功能
+ * 提供方法学的增删改查功能，包含列表展示、新增编辑、详情查看等功能
  */
 const MethodologyManagement: React.FC = () => {
+  // 状态管理
+  const [methodologies, setMethodologies] = useState<Methodology[]>([])
+  const [loading, setLoading] = useState(false)
+  const [modalVisible, setModalVisible] = useState(false)
+  const [detailVisible, setDetailVisible] = useState(false)
+  const [editingItem, setEditingItem] = useState<Methodology | null>(null)
+  const [viewingItem, setViewingItem] = useState<Methodology | null>(null)
+  const [searchText, setSearchText] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [selectedDetectionType, setSelectedDetectionType] = useState<string>('')
+  const [selectedStatus, setSelectedStatus] = useState<string>('')
+  
+  // 表单实例
+  const [form] = Form.useForm()
+
   // 模拟数据
-  const [methodologies, setMethodologies] = useState<Methodology[]>([
+  const mockData: Methodology[] = [
     {
       id: '1',
-      name: '二代测序技术（NGS）',
-      code: 'NGS_V2.1',
-      category: '基因测序',
-      status: 'active',
-      principle: '基于合成测序技术，通过DNA聚合酶在模板链上合成互补链，同时检测每个碱基的加入',
-      technicalParameters: {
-        throughput: '20Gb/run',
-        sensitivity: '≥99%',
-        specificity: '≥99.5%',
-        precision: 'CV≤5%',
-        accuracy: '≥99%',
-        linearRange: '10ng-1μg',
-        detectionLimit: '5% VAF',
-        reportableRange: '1%-100% VAF',
-        cvRequirement: 5,
-        biasRequirement: 10
-      },
-      instrumentRequirements: {
-        mainInstruments: ['Illumina NovaSeq 6000', 'Agilent 2100生物分析仪'],
-        auxiliaryInstruments: ['离心机', '移液器', 'PCR仪', '涡旋混合器'],
-        calibrationRequirements: '每月校准一次，使用标准品验证',
-        maintenanceSchedule: '每周清洁，每月维护，每季度深度保养',
-        environmentalConditions: {
-          temperature: '18-25°C',
-          humidity: '30-70%',
-          ventilation: '每小时换气15次以上'
+      code: 'M-MOL-001',
+      name: '荧光PCR熔解曲线法',
+      englishName: 'Fluorescent PCR Melting Curve Analysis',
+      category: MethodologyCategory.MOLECULAR_BIOLOGY,
+      technologyPlatform: TechnologyPlatform.PCR,
+      detectionType: DetectionType.QUALITATIVE,
+      status: MethodologyStatus.ACTIVE,
+      description: '基于荧光PCR技术和熔解曲线分析，通过检测DNA双链解链温度的变化来识别基因突变',
+      technicalPrinciple: '荧光PCR熔解曲线分析是一种基于PCR扩增产物熔解温度(Tm值)差异的检测技术...',
+      technicalRequirement: {
+        sampleRequirement: {
+          sampleTypes: ['血浆', '血清', '全血'],
+          minimumVolume: '≥200μL',
+          storageCondition: '-80℃',
+          qualityRequirements: 'DNA质量符合检测要求，A260/A280=1.8-2.0'
+        },
+        environmentRequirement: {
+          temperature: '18-25℃',
+          humidity: '<70%',
+          cleanliness: '万级实验室'
+        },
+        personnelRequirement: {
+          certifications: ['PCR上岗证'],
+          training: ['专项培训'],
+          experience: '1年以上'
         }
       },
-      sampleRequirements: {
-        sampleTypes: ['血液', '组织', 'FFPE', '胸腹水'],
-        minimumVolume: '血液≥2ml，组织≥10mg',
-        qualityRequirements: 'DNA浓度≥10ng/μL，总量≥100ng，A260/A280比值1.8-2.0',
-        storageConditions: '-80°C长期保存，-20°C短期保存',
-        transportRequirements: '干冰运输，避免反复冻融',
-        pretreatmentSteps: ['DNA提取', '质量检测', '浓度标准化']
-      },
-      associatedDetectionItems: ['肺癌基因检测', '乳腺癌基因检测'],
-      procedureSteps: [
-        'DNA质量检测',
-        '文库构建',
-        '文库质控',
-        '上机测序',
-        '数据分析',
-        '结果解读'
-      ],
-      qualityControl: '每批次包含阳性对照、阴性对照和质控样本',
-      resultInterpretation: '根据变异频率和数据库注释进行临床意义评估',
-      limitations: '无法检测大片段重排、重复序列区域检测能力有限',
-      references: [
-        'PMID: 12345678',
-        'ISO 15189:2012',
-        'CAP分子病理学指南'
-      ],
-      sopDocuments: [
+      experimentSteps: [
         {
-          id: 'sop1',
-          name: 'NGS操作手册',
-          version: 'V2.1',
-          type: 'procedure',
-          uploadDate: '2024-01-01',
-          fileUrl: '/files/ngs-manual.pdf',
-          approver: '张主任',
-          status: 'approved'
+          id: '1',
+          name: '核酸提取',
+          description: '从样本中提取DNA',
+          requirements: 'DNA质量符合检测要求，A260/A280=1.8-2.0',
+          order: 1
         },
         {
-          id: 'sop2',
-          name: '质量控制SOP',
-          version: 'V1.0',
-          type: 'quality',
-          uploadDate: '2024-01-01',
-          fileUrl: '/files/qc-sop.pdf',
-          approver: '张主任',
-          status: 'approved'
+          id: '2',
+          name: 'PCR扩增',
+          description: '进行荧光PCR扩增',
+          requirements: '扩增程序按照试剂盒说明设置',
+          order: 2
+        },
+        {
+          id: '3',
+          name: '熔解曲线分析',
+          description: '分析熔解曲线',
+          requirements: '使用仪器配套软件进行分析',
+          order: 3
         }
       ],
-      version: 'V2.1',
-      effectiveDate: '2024-01-01',
-      reviewDate: '2024-12-31',
-      approver: '张主任',
-      isActive: true,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-15'
+      performanceIndicators: [
+        {
+          id: '1',
+          name: '检测限',
+          requirement: '≤10 copies/μL',
+          verificationMethod: '梯度稀释验证',
+          notes: '95%置信区间'
+        },
+        {
+          id: '2',
+          name: '精密度',
+          requirement: 'CV<15%',
+          verificationMethod: '室内质控',
+          notes: '重复20次'
+        }
+      ],
+      resourceConfiguration: {
+        equipmentTypes: [
+          { id: '1', name: '实时荧光定量PCR仪', selected: true },
+          { id: '2', name: '核酸提取仪', selected: true },
+          { id: '3', name: '离心机', selected: true }
+        ],
+        reagentTypes: [
+          { id: '1', name: 'PCR试剂盒', selected: true },
+          { id: '2', name: '核酸提取试剂盒', selected: true }
+        ]
+      },
+      createdBy: '张主任',
+      createdAt: '2023-06-15',
+      updatedBy: '李研究员',
+      updatedAt: '2024-01-20'
     },
     {
       id: '2',
-      name: '实时荧光定量PCR（qPCR）',
-      code: 'qPCR_V1.3',
-      category: '基因扩增',
-      status: 'active',
-      principle: '基于PCR扩增原理，通过荧光信号实时监测DNA扩增过程',
-      technicalParameters: {
-        throughput: '96样本/run',
-        sensitivity: '10拷贝/反应',
-        specificity: '≥99%',
-        precision: 'CV≤3%',
-        accuracy: '±0.2 Ct值',
-        linearRange: '10^2-10^8拷贝数',
-        detectionLimit: '10拷贝/反应',
-        reportableRange: '10-10^9拷贝数',
-        cvRequirement: 3,
-        biasRequirement: 5
-      },
-      instrumentRequirements: {
-        mainInstruments: ['ABI 7500实时PCR仪'],
-        auxiliaryInstruments: ['离心机', '移液器', '涡旋混合器', '冰盒'],
-        calibrationRequirements: '每月使用标准品校准',
-        maintenanceSchedule: '每周清洁光学系统，每月更换滤光片',
-        environmentalConditions: {
-          temperature: '20-25°C',
-          humidity: '40-60%',
-          ventilation: '避免震动和强光'
+      code: 'M-MOL-002',
+      name: '实时荧光定量PCR',
+      englishName: 'Real-time Quantitative PCR',
+      category: MethodologyCategory.MOLECULAR_BIOLOGY,
+      technologyPlatform: TechnologyPlatform.PCR,
+      detectionType: DetectionType.QUANTITATIVE,
+      status: MethodologyStatus.ACTIVE,
+      description: '基于PCR扩增过程中荧光信号的实时检测，实现核酸的定量分析',
+      technicalPrinciple: '实时荧光定量PCR技术通过在PCR反应体系中加入荧光基团...',
+      technicalRequirement: {
+        sampleRequirement: {
+          sampleTypes: ['血浆', '血清', '组织'],
+          minimumVolume: '≥100μL',
+          storageCondition: '-20℃',
+          qualityRequirements: 'RNA质量符合检测要求，RIN≥7.0'
+        },
+        environmentRequirement: {
+          temperature: '20-25℃',
+          humidity: '<60%',
+          cleanliness: '万级实验室'
+        },
+        personnelRequirement: {
+          certifications: ['PCR上岗证', '分子生物学技术证书'],
+          training: ['qPCR专项培训'],
+          experience: '2年以上'
         }
       },
-      sampleRequirements: {
-        sampleTypes: ['血液', '组织', '唾液'],
-        minimumVolume: '血液≥1ml，组织≥5mg',
-        qualityRequirements: 'DNA浓度1-100ng/μL，无蛋白质和RNA污染',
-        storageConditions: '-20°C保存，避免反复冻融',
-        transportRequirements: '冰袋运输，24小时内处理',
-        pretreatmentSteps: ['DNA提取', '浓度测定', '稀释至工作浓度']
-      },
-      associatedDetectionItems: ['病毒载量检测', '基因拷贝数检测'],
-      procedureSteps: [
-        '样本预处理',
-        '反应体系配制',
-        'PCR程序设置',
-        '扩增检测',
-        '结果分析'
-      ],
-      qualityControl: '每次实验包含标准品、阳性对照、阴性对照',
-      resultInterpretation: '根据Ct值和标准曲线计算拷贝数',
-      limitations: '只能检测已知序列，扩增片段长度有限',
-      references: [
-        'PMID: 87654321',
-        'MIQE指南',
-        'FDA qPCR指导原则'
-      ],
-      sopDocuments: [
+      experimentSteps: [
         {
-          id: 'sop3',
-          name: 'qPCR标准操作程序',
-          version: 'V1.3',
-          type: 'procedure',
-          uploadDate: '2023-06-01',
-          fileUrl: '/files/qpcr-sop.pdf',
-          approver: '李博士',
-          status: 'approved'
+          id: '1',
+          name: 'RNA提取',
+          description: '从样本中提取总RNA',
+          requirements: 'RNA质量符合检测要求，RIN≥7.0',
+          order: 1
+        },
+        {
+          id: '2',
+          name: '逆转录',
+          description: '将RNA逆转录为cDNA',
+          requirements: '逆转录效率>80%',
+          order: 2
+        },
+        {
+          id: '3',
+          name: 'qPCR扩增',
+          description: '进行实时荧光定量PCR',
+          requirements: '扩增效率90-110%',
+          order: 3
         }
       ],
-      version: 'V1.3',
-      effectiveDate: '2023-06-01',
-      reviewDate: '2024-06-01',
-      approver: '李博士',
-      isActive: true,
-      createdAt: '2023-06-01',
-      updatedAt: '2024-01-10'
-    },
-    {
-      id: '3',
-      name: 'Sanger测序',
-      code: 'SANGER_V1.0',
-      category: '基因测序',
-      status: 'pending',
-      principle: '基于链终止法的DNA测序技术，使用荧光标记的双脱氧核苷酸',
-      technicalParameters: {
-        throughput: '96样本/天',
-        sensitivity: '≥95%',
-        specificity: '≥99%',
-        precision: 'Phred质量值≥20',
-        accuracy: '≥99%',
-        detectionLimit: '20% 杂合突变',
-        reportableRange: '100-800bp序列',
-        cvRequirement: 10,
-        biasRequirement: 15
-      },
-      instrumentRequirements: {
-        mainInstruments: ['ABI 3730xl测序仪'],
-        auxiliaryInstruments: ['PCR仪', '离心机', '电泳仪', '纯化柱'],
-        calibrationRequirements: '每周校准，使用标准DNA验证',
-        maintenanceSchedule: '每日清洁毛细管，每周更换缓冲液',
-        environmentalConditions: {
-          temperature: '22-25°C',
-          humidity: '45-65%',
-          ventilation: '无尘环境，避免震动'
+      performanceIndicators: [
+        {
+          id: '1',
+          name: '定量限',
+          requirement: '≤50 copies/μL',
+          verificationMethod: '重复性验证',
+          notes: 'CV<25%'
+        },
+        {
+          id: '2',
+          name: '线性范围',
+          requirement: '5-10^5 copies',
+          verificationMethod: '线性稀释',
+          notes: 'R²>0.98'
         }
-      },
-      sampleRequirements: {
-        sampleTypes: ['PCR产物', 'DNA'],
-        minimumVolume: 'PCR产物≥20μl',
-        qualityRequirements: 'PCR产物浓度10-50ng/μL，长度100-800bp',
-        storageConditions: '4°C短期保存，-20°C长期保存',
-        transportRequirements: '常温运输，避免污染',
-        pretreatmentSteps: ['PCR扩增', '产物纯化', '浓度检测']
-      },
-      associatedDetectionItems: ['单基因突变检测'],
-      procedureSteps: [
-        'PCR扩增',
-        '产物纯化',
-        '测序反应',
-        '产物纯化',
-        '毛细管电泳',
-        '序列分析'
       ],
-      qualityControl: '每批次包含已知序列对照',
-      resultInterpretation: '通过序列比对识别变异位点',
-      limitations: '通量低，成本高，无法检测大片段缺失',
-      references: [
-        'PMID: 11111111',
-        'Sanger测序标准',
-        'ACMG指南'
-      ],
-      version: 'V1.0',
-      effectiveDate: '2023-01-01',
-      reviewDate: '2024-01-01',
-      approver: '王教授',
-      isActive: true,
-      createdAt: '2023-01-01',
-      updatedAt: '2023-12-01'
+      resourceConfiguration: {
+        equipmentTypes: [
+          { id: '1', name: '实时荧光定量PCR仪', selected: true },
+          { id: '2', name: 'RNA提取仪', selected: true }
+        ],
+        reagentTypes: [
+          { id: '1', name: 'qPCR试剂盒', selected: true },
+          { id: '2', name: '逆转录试剂盒', selected: true }
+        ]
+      },
+      createdBy: '王博士',
+      createdAt: '2023-07-10',
+      updatedBy: '李研究员',
+      updatedAt: '2024-02-15'
     }
-  ])
+  ]
 
-  const [isModalVisible, setIsModalVisible] = useState(false)
-  const [editingItem, setEditingItem] = useState<Methodology | null>(null)
-  const [form] = Form.useForm()
-  const [searchText, setSearchText] = useState('')
-  const [detailVisible, setDetailVisible] = useState(false)
-  const [viewingItem, setViewingItem] = useState<Methodology | null>(null)
+  // 初始化数据
+  useEffect(() => {
+    loadData()
+  }, [])
 
   /**
-   * 显示详情抽屉
-   * @param item - 要查看的方法学
+   * 加载数据
    */
-  const handleViewDetail = (item: Methodology) => {
-    setViewingItem(item)
-    setDetailVisible(true)
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setMethodologies(mockData)
+    } catch (error) {
+      message.error('加载数据失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /**
+   * 过滤数据
+   */
+  const filteredData = methodologies.filter(item => {
+    const matchesSearch = !searchText || 
+      item.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      item.code.toLowerCase().includes(searchText.toLowerCase())
+    const matchesCategory = !selectedCategory || item.category === selectedCategory
+    const matchesDetectionType = !selectedDetectionType || item.detectionType === selectedDetectionType
+    const matchesStatus = !selectedStatus || item.status === selectedStatus
+    
+    return matchesSearch && matchesCategory && matchesDetectionType && matchesStatus
+  })
+
+  /**
+   * 获取分类显示文本
+   */
+  const getCategoryText = (category: MethodologyCategory) => {
+    const categoryMap = {
+      [MethodologyCategory.MOLECULAR_BIOLOGY]: '分子生物学',
+      [MethodologyCategory.IMMUNOLOGY]: '免疫学',
+      [MethodologyCategory.MICROBIOLOGY]: '微生物学',
+      [MethodologyCategory.BIOCHEMISTRY]: '生物化学',
+      [MethodologyCategory.CYTOGENETICS]: '细胞遗传学'
+    }
+    return categoryMap[category] || category
+  }
+
+  /**
+   * 获取检测类型显示文本
+   */
+  const getDetectionTypeText = (type: DetectionType) => {
+    const typeMap = {
+      [DetectionType.QUALITATIVE]: '定性检测',
+      [DetectionType.QUANTITATIVE]: '定量检测'
+    }
+    return typeMap[type] || type
+  }
+
+  /**
+   * 获取技术平台显示文本
+   */
+  const getTechnologyPlatformText = (platform: TechnologyPlatform) => {
+    const platformMap = {
+      [TechnologyPlatform.PCR]: 'PCR平台',
+      [TechnologyPlatform.DIGITAL_PCR]: '数字PCR平台',
+      [TechnologyPlatform.NGS]: '二代测序平台',
+      [TechnologyPlatform.SANGER]: 'Sanger测序平台',
+      [TechnologyPlatform.ELISA]: 'ELISA平台',
+      [TechnologyPlatform.CULTURE]: '培养平台',
+      [TechnologyPlatform.MASS_SPEC]: '质谱平台'
+    }
+    return platformMap[platform] || platform
   }
 
   /**
    * 获取状态配置
-   * @param status - 状态值
    */
-  const getStatusConfig = (status: string) => {
+  const getStatusConfig = (status: MethodologyStatus) => {
     const configs = {
-      active: { text: '启用', color: 'success' },
-      pending: { text: '待审', color: 'warning' },
-      inactive: { text: '停用', color: 'default' }
+      [MethodologyStatus.ACTIVE]: { text: '启用', color: 'success' },
+      [MethodologyStatus.INACTIVE]: { text: '停用', color: 'default' }
     }
-    return configs[status as keyof typeof configs] || { text: status, color: 'default' }
+    return configs[status] || { text: status, color: 'default' }
   }
 
   /**
-   * 获取SOP文档类型名称
-   * @param type - SOP文档类型
+   * 表格列定义
    */
-  const getSOPTypeName = (type: string) => {
-    const typeNames = {
-      procedure: '操作程序',
-      quality: '质量控制',
-      safety: '安全规范',
-      maintenance: '维护保养'
-    }
-    return typeNames[type as keyof typeof typeNames] || type
-  }
-
-  /**
-   * 获取SOP文档类型颜色
-   * @param type - SOP文档类型
-   */
-  const getSOPTypeColor = (type: string) => {
-    const colors = {
-      procedure: 'blue',
-      quality: 'green',
-      safety: 'red',
-      maintenance: 'orange'
-    }
-    return colors[type as keyof typeof colors] || 'default'
-  }
-
-  /**
-   * 显示添加/编辑模态框
-   * @param item - 要编辑的方法学，为空时表示添加
-   */
-  const showModal = (item?: Methodology) => {
-    setEditingItem(item || null)
-    if (item) {
-      form.setFieldsValue({
-        ...item,
-        procedureSteps: item.procedureSteps.join('\n'),
-        references: item.references.join('\n')
-      })
-    } else {
-      form.resetFields()
-    }
-    setIsModalVisible(true)
-  }
-
-  /**
-   * 处理表单提交
-   * @param values - 表单数据
-   */
-  const handleSubmit = (values: any) => {
-    const processedValues = {
-      ...values,
-      procedureSteps: values.procedureSteps.split('\n').filter((step: string) => step.trim()),
-      references: values.references.split('\n').filter((ref: string) => ref.trim())
-    }
-
-    if (editingItem) {
-      // 编辑
-      setMethodologies(prev => prev.map(item => 
-        item.id === editingItem.id 
-          ? { ...item, ...processedValues, updatedAt: new Date().toISOString().split('T')[0] }
-          : item
-      ))
-      message.success('方法学更新成功')
-    } else {
-      // 添加
-      const newItem: Methodology = {
-        ...processedValues,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0]
-      }
-      setMethodologies(prev => [...prev, newItem])
-      message.success('方法学添加成功')
-    }
-    setIsModalVisible(false)
-    form.resetFields()
-  }
-
-  /**
-   * 删除方法学
-   * @param id - 方法学ID
-   */
-  const handleDelete = (id: string) => {
-    setMethodologies(prev => prev.filter(item => item.id !== id))
-    message.success('方法学删除成功')
-  }
-
-  // 过滤数据
-  const filteredItems = methodologies.filter(item =>
-    item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.code.toLowerCase().includes(searchText.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchText.toLowerCase())
-  )
-
-  // 表格列定义
-  const columns = [
+  const columns: ColumnsType<Methodology> = [
+    {
+      title: '方法学编号',
+      dataIndex: 'code',
+      key: 'code',
+      width: 120,
+      ellipsis: true,
+      fixed: 'left'
+    },
     {
       title: '方法学名称',
       dataIndex: 'name',
       key: 'name',
       width: 200,
+      ellipsis: true,
       render: (text: string, record: Methodology) => (
         <div>
-          <div style={{ fontWeight: 'bold' }}>{text}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>{record.code}</div>
-        </div>
-      )
-    },
-    {
-      title: '类别',
-      dataIndex: 'category',
-      key: 'category',
-      width: 120,
-      render: (category: string) => <Tag color="blue">{category}</Tag>
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      align: 'center' as const,
-      render: (status: string) => {
-        const config = getStatusConfig(status)
-        return <Badge status={config.color as any} text={config.text} />
-      }
-    },
-    {
-      title: '版本',
-      dataIndex: 'version',
-      key: 'version',
-      width: 80,
-      align: 'center' as const
-    },
-    {
-      title: '技术参数',
-      key: 'technicalParameters',
-      width: 200,
-      render: (record: Methodology) => (
-        <div>
-          <div>灵敏度: {record.technicalParameters.sensitivity}</div>
-          <div>特异性: {record.technicalParameters.specificity}</div>
-          {record.technicalParameters.detectionLimit && (
-            <div>检测限: {record.technicalParameters.detectionLimit}</div>
+          <div style={{ fontWeight: 500 }}>{text}</div>
+          {record.englishName && (
+            <div style={{ fontSize: '12px', color: '#666' }}>{record.englishName}</div>
           )}
         </div>
       )
     },
     {
-      title: '关联检测项目',
-      dataIndex: 'associatedDetectionItems',
-      key: 'associatedDetectionItems',
-      width: 150,
-      render: (items: string[]) => {
-        if (!items || items.length === 0) return '-'
-        if (items.length <= 2) {
-          return items.map(item => <Tag key={item} color="geekblue">{item}</Tag>)
-        }
-        return (
-          <Tooltip title={items.join('、')}>
-            <div>
-              {items.slice(0, 2).map(item => <Tag key={item} color="geekblue">{item}</Tag>)}
-              <Tag color="default">+{items.length - 2}</Tag>
-            </div>
-          </Tooltip>
-        )
-      }
-    },
-    {
-      title: 'SOP文档',
-      dataIndex: 'sopDocuments',
-      key: 'sopDocuments',
+      title: '技术分类',
+      dataIndex: 'category',
+      key: 'category',
       width: 120,
-      align: 'center' as const,
-      render: (documents: SOPDocument[]) => {
-        if (!documents || documents.length === 0) return '-'
-        return (
-          <Tooltip title={`共${documents.length}个文档`}>
-            <Badge count={documents.length} showZero>
-              <FileProtectOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
-            </Badge>
-          </Tooltip>
-        )
-      }
+      render: (category: MethodologyCategory) => (
+        <Tag color="blue">{getCategoryText(category)}</Tag>
+      )
     },
     {
-      title: '生效日期',
-      dataIndex: 'effectiveDate',
-      key: 'effectiveDate',
+      title: '检测类型',
+      dataIndex: 'detectionType',
+      key: 'detectionType',
       width: 100,
-      align: 'center' as const
-    },
-    {
-      title: '复审日期',
-      dataIndex: 'reviewDate',
-      key: 'reviewDate',
-      width: 100,
-      align: 'center' as const
-    },
-    {
-      title: '审批人',
-      dataIndex: 'approver',
-      key: 'approver',
-      width: 100,
-      align: 'center' as const
-    },
-    {
-      title: '启用状态',
-      dataIndex: 'isActive',
-      key: 'isActive',
-      width: 80,
-      align: 'center' as const,
-      render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? '有效' : '失效'}
+      render: (type: DetectionType) => (
+        <Tag color={type === DetectionType.QUANTITATIVE ? 'orange' : 'green'}>
+          {getDetectionTypeText(type)}
         </Tag>
       )
     },
     {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 80,
+      render: (status: MethodologyStatus) => {
+        const config = getStatusConfig(status)
+        return <Badge status={config.color as any} text={config.text} />
+      }
+    },
+    {
       title: '操作',
       key: 'action',
-      width: 150,
-      fixed: 'right' as const,
-      render: (record: Methodology) => (
-        <Space>
+      width: 200,
+      fixed: 'right',
+      render: (_, record: Methodology) => (
+        <Space size="small">
           <Tooltip title="查看详情">
             <Button 
-              type="link" 
+              type="text" 
               icon={<EyeOutlined />} 
-              onClick={() => handleViewDetail(record)}
               size="small"
+              onClick={() => handleViewDetail(record)}
             />
           </Tooltip>
           <Tooltip title="编辑">
             <Button 
-              type="link" 
+              type="text" 
               icon={<EditOutlined />} 
-              onClick={() => showModal(record)}
               size="small"
+              onClick={() => handleEdit(record)}
+            />
+          </Tooltip>
+          <Tooltip title="复制">
+            <Button 
+              type="text" 
+              icon={<CopyOutlined />} 
+              size="small"
+              onClick={() => handleCopy(record)}
+            />
+          </Tooltip>
+          <Tooltip title={record.status === MethodologyStatus.ACTIVE ? '停用' : '启用'}>
+            <Button 
+              type="text" 
+              icon={record.status === MethodologyStatus.ACTIVE ? <StopOutlined /> : <CheckCircleOutlined />}
+              size="small"
+              onClick={() => handleToggleStatus(record)}
             />
           </Tooltip>
           <Popconfirm
-            title="确定删除这个方法学吗？"
+            title="确定要删除这个方法学吗？"
             onConfirm={() => handleDelete(record.id)}
             okText="确定"
             cancelText="取消"
-            icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
           >
             <Tooltip title="删除">
               <Button 
-                type="link" 
-                danger 
-                icon={<DeleteOutlined />}
+                type="text" 
+                icon={<DeleteOutlined />} 
                 size="small"
+                danger
               />
             </Tooltip>
           </Popconfirm>
@@ -654,719 +465,469 @@ const MethodologyManagement: React.FC = () => {
     }
   ]
 
+  /**
+   * 处理新增
+   */
+  const handleAdd = () => {
+    setEditingItem(null)
+    form.resetFields()
+    setModalVisible(true)
+  }
+
+  /**
+   * 处理编辑
+   */
+  const handleEdit = (item: Methodology) => {
+    setEditingItem(item)
+    form.setFieldsValue(item)
+    setModalVisible(true)
+  }
+
+  /**
+   * 处理复制
+   */
+  const handleCopy = (item: Methodology) => {
+    const newItem = { 
+      ...item, 
+      id: '', 
+      code: '', 
+      name: `${item.name} - 副本`,
+      createdAt: new Date().toISOString().split('T')[0]
+    }
+    setEditingItem(newItem)
+    form.setFieldsValue(newItem)
+    setModalVisible(true)
+  }
+
+  /**
+   * 处理查看详情
+   */
+  const handleViewDetail = (item: Methodology) => {
+    setViewingItem(item)
+    setDetailVisible(true)
+  }
+
+  /**
+   * 处理切换状态
+   */
+  const handleToggleStatus = async (item: Methodology) => {
+    try {
+      const newStatus = item.status === MethodologyStatus.ACTIVE 
+        ? MethodologyStatus.INACTIVE 
+        : MethodologyStatus.ACTIVE
+      
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setMethodologies(prev => 
+        prev.map(m => 
+          m.id === item.id 
+            ? { ...m, status: newStatus, updatedAt: new Date().toISOString().split('T')[0] }
+            : m
+        )
+      )
+      
+      message.success(`方法学已${newStatus === MethodologyStatus.ACTIVE ? '启用' : '停用'}`)
+    } catch (error) {
+      message.error('操作失败')
+    }
+  }
+
+  /**
+   * 处理删除
+   */
+  const handleDelete = async (id: string) => {
+    try {
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setMethodologies(prev => prev.filter(item => item.id !== id))
+      message.success('删除成功')
+    } catch (error) {
+      message.error('删除失败')
+    }
+  }
+
+  /**
+   * 处理表单提交
+   */
+  const handleSubmit = async (values: any) => {
+    try {
+      // 模拟API调用
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      if (editingItem?.id) {
+        // 编辑
+        setMethodologies(prev => 
+          prev.map(item => 
+            item.id === editingItem.id 
+              ? { ...item, ...values, updatedAt: new Date().toISOString().split('T')[0] }
+              : item
+          )
+        )
+        message.success('更新成功')
+      } else {
+        // 新增
+        const newItem: Methodology = {
+          ...values,
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString().split('T')[0]
+        }
+        setMethodologies(prev => [newItem, ...prev])
+        message.success('创建成功')
+      }
+      
+      setModalVisible(false)
+      form.resetFields()
+    } catch (error) {
+      message.error('保存失败')
+    }
+  }
+
+  /**
+   * 重置筛选条件
+   */
+  const handleReset = () => {
+    setSearchText('')
+    setSelectedCategory('')
+    setSelectedDetectionType('')
+    setSelectedStatus('')
+  }
+
+  /**
+   * 导入方法学
+   */
+  const handleImport = () => {
+    message.info('导入功能开发中...')
+  }
+
+  /**
+   * 导出列表
+   */
+  const handleExport = () => {
+    message.info('导出功能开发中...')
+  }
+
   return (
-    <Card>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <Space>
-          <Input
-            placeholder="搜索方法学名称、编码或类别"
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
-          />
-        </Space>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={() => showModal()}
-        >
-          添加方法学
-        </Button>
-      </div>
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <div style={{ marginBottom: '16px' }}>
+          <Title level={4} style={{ margin: 0 }}>方法学列表</Title>
+        </div>
+        
+        {/* 搜索与筛选 */}
+        <Card size="small" style={{ marginBottom: '16px' }}>
+          <Row gutter={[16, 16]}>
+            <Col span={6}>
+              <Input
+                placeholder="搜索方法学..."
+                prefix={<SearchOutlined />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+              />
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="技术平台"
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value={MethodologyCategory.MOLECULAR_BIOLOGY}>分子生物学</Option>
+                <Option value={MethodologyCategory.IMMUNOLOGY}>免疫学</Option>
+                <Option value={MethodologyCategory.MICROBIOLOGY}>微生物学</Option>
+                <Option value={MethodologyCategory.BIOCHEMISTRY}>生物化学</Option>
+                <Option value={MethodologyCategory.CYTOGENETICS}>细胞遗传学</Option>
+              </Select>
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="检测类型"
+                value={selectedDetectionType}
+                onChange={setSelectedDetectionType}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value={DetectionType.QUALITATIVE}>定性检测</Option>
+                <Option value={DetectionType.QUANTITATIVE}>定量检测</Option>
+              </Select>
+            </Col>
+            <Col span={4}>
+              <Select
+                placeholder="状态"
+                value={selectedStatus}
+                onChange={setSelectedStatus}
+                allowClear
+                style={{ width: '100%' }}
+              >
+                <Option value={MethodologyStatus.ACTIVE}>启用</Option>
+                <Option value={MethodologyStatus.INACTIVE}>停用</Option>
+              </Select>
+            </Col>
+            <Col span={6}>
+              <Space>
+                <Button onClick={handleReset}>重置</Button>
+                <Button icon={<ExportOutlined />} onClick={handleExport}>
+                  导出列表
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+          <Row style={{ marginTop: '16px' }}>
+            <Col span={24}>
+              <Space>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                  新增
+                </Button>
+                <Button icon={<ImportOutlined />} onClick={handleImport}>
+                  导入
+                </Button>
+              </Space>
+            </Col>
+          </Row>
+        </Card>
 
-      <Table
-        columns={columns}
-        dataSource={filteredItems}
-        rowKey="id"
-        pagination={{
-          total: filteredItems.length,
-          pageSize: 10,
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total) => `共 ${total} 条记录`
-        }}
-        scroll={{ x: 1800 }}
-      />
+        {/* 方法学列表 */}
+        <Table
+          columns={columns}
+          dataSource={filteredData}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 1000 }}
+          pagination={{
+            total: filteredData.length,
+            pageSize: 20,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => 
+              `第${range[0]}-${range[1]}条/共${total}条方法学`
+          }}
+        />
+      </Card>
 
-      {/* 详情抽屉 */}
-      <Drawer
-        title="方法学详情"
-        placement="right"
-        onClose={() => setDetailVisible(false)}
-        open={detailVisible}
-        width={800}
-      >
-        {viewingItem && (
-          <div>
-            <Descriptions title="基本信息" bordered column={2} style={{ marginBottom: 24 }}>
-              <Descriptions.Item label="方法学名称">{viewingItem.name}</Descriptions.Item>
-              <Descriptions.Item label="方法学编码">{viewingItem.code}</Descriptions.Item>
-              <Descriptions.Item label="类别">
-                <Tag color="blue">{viewingItem.category}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="状态">
-                {(() => {
-                  const config = getStatusConfig(viewingItem.status)
-                  return <Badge status={config.color as any} text={config.text} />
-                })()}
-              </Descriptions.Item>
-              <Descriptions.Item label="版本号">{viewingItem.version}</Descriptions.Item>
-              <Descriptions.Item label="生效日期">{viewingItem.effectiveDate}</Descriptions.Item>
-              <Descriptions.Item label="复审日期">{viewingItem.reviewDate}</Descriptions.Item>
-              <Descriptions.Item label="审批人">{viewingItem.approver}</Descriptions.Item>
-              <Descriptions.Item label="启用状态" span={2}>
-                <Tag color={viewingItem.isActive ? 'green' : 'red'}>
-                  {viewingItem.isActive ? '有效' : '失效'}
-                </Tag>
-              </Descriptions.Item>
-            </Descriptions>
-
-            <Descriptions title="检测原理" bordered style={{ marginBottom: 24 }}>
-              <Descriptions.Item label="原理描述" span={3}>
-                {viewingItem.principle}
-              </Descriptions.Item>
-            </Descriptions>
-
-            <Collapse defaultActiveKey={['1']} style={{ marginBottom: 24 }}>
-              <Panel header={<><ExperimentOutlined /> 技术参数</>} key="1">
-                <Descriptions bordered column={2}>
-                  {viewingItem.technicalParameters.throughput && (
-                    <Descriptions.Item label="通量">{viewingItem.technicalParameters.throughput}</Descriptions.Item>
-                  )}
-                  <Descriptions.Item label="灵敏度">{viewingItem.technicalParameters.sensitivity}</Descriptions.Item>
-                  <Descriptions.Item label="特异性">{viewingItem.technicalParameters.specificity}</Descriptions.Item>
-                  <Descriptions.Item label="精密度">{viewingItem.technicalParameters.precision}</Descriptions.Item>
-                  <Descriptions.Item label="准确度">{viewingItem.technicalParameters.accuracy}</Descriptions.Item>
-                  {viewingItem.technicalParameters.linearRange && (
-                    <Descriptions.Item label="线性范围">{viewingItem.technicalParameters.linearRange}</Descriptions.Item>
-                  )}
-                  {viewingItem.technicalParameters.detectionLimit && (
-                    <Descriptions.Item label="检测限">{viewingItem.technicalParameters.detectionLimit}</Descriptions.Item>
-                  )}
-                  {viewingItem.technicalParameters.reportableRange && (
-                    <Descriptions.Item label="报告范围">{viewingItem.technicalParameters.reportableRange}</Descriptions.Item>
-                  )}
-                  {viewingItem.technicalParameters.cvRequirement && (
-                    <Descriptions.Item label="CV要求">≤{viewingItem.technicalParameters.cvRequirement}%</Descriptions.Item>
-                  )}
-                  {viewingItem.technicalParameters.biasRequirement && (
-                    <Descriptions.Item label="偏倚要求">≤{viewingItem.technicalParameters.biasRequirement}%</Descriptions.Item>
-                  )}
-                </Descriptions>
-              </Panel>
-
-              <Panel header={<><SettingOutlined /> 仪器要求</>} key="2">
-                <Descriptions bordered column={1}>
-                  <Descriptions.Item label="主要仪器">
-                    {viewingItem.instrumentRequirements.mainInstruments.map(instrument => (
-                      <Tag key={instrument} color="blue" style={{ margin: '2px' }}>{instrument}</Tag>
-                    ))}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="辅助仪器">
-                    {viewingItem.instrumentRequirements.auxiliaryInstruments.map(instrument => (
-                      <Tag key={instrument} color="geekblue" style={{ margin: '2px' }}>{instrument}</Tag>
-                    ))}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="校准要求">{viewingItem.instrumentRequirements.calibrationRequirements}</Descriptions.Item>
-                  <Descriptions.Item label="维护计划">{viewingItem.instrumentRequirements.maintenanceSchedule}</Descriptions.Item>
-                  <Descriptions.Item label="环境条件">
-                    <div>
-                      <div>温度: {viewingItem.instrumentRequirements.environmentalConditions.temperature}</div>
-                      <div>湿度: {viewingItem.instrumentRequirements.environmentalConditions.humidity}</div>
-                      <div>通风: {viewingItem.instrumentRequirements.environmentalConditions.ventilation}</div>
-                    </div>
-                  </Descriptions.Item>
-                </Descriptions>
-              </Panel>
-
-              <Panel header={<><SafetyCertificateOutlined /> 样本要求</>} key="3">
-                <Descriptions bordered column={1}>
-                  <Descriptions.Item label="样本类型">
-                    {viewingItem.sampleRequirements.sampleTypes.map(type => (
-                      <Tag key={type} color="green" style={{ margin: '2px' }}>{type}</Tag>
-                    ))}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="最小体积">{viewingItem.sampleRequirements.minimumVolume}</Descriptions.Item>
-                  <Descriptions.Item label="质量要求">{viewingItem.sampleRequirements.qualityRequirements}</Descriptions.Item>
-                  <Descriptions.Item label="保存条件">{viewingItem.sampleRequirements.storageConditions}</Descriptions.Item>
-                  <Descriptions.Item label="运输要求">{viewingItem.sampleRequirements.transportRequirements}</Descriptions.Item>
-                  {viewingItem.sampleRequirements.pretreatmentSteps && (
-                    <Descriptions.Item label="预处理步骤">
-                      <List
-                        size="small"
-                        dataSource={viewingItem.sampleRequirements.pretreatmentSteps}
-                        renderItem={(item, index) => (
-                          <List.Item>
-                            <Text>{index + 1}. {item}</Text>
-                          </List.Item>
-                        )}
-                      />
-                    </Descriptions.Item>
-                  )}
-                </Descriptions>
-              </Panel>
-            </Collapse>
-
-            {viewingItem.associatedDetectionItems && viewingItem.associatedDetectionItems.length > 0 && (
-              <Descriptions title="关联检测项目" bordered style={{ marginBottom: 24 }}>
-                <Descriptions.Item label="检测项目" span={3}>
-                  {viewingItem.associatedDetectionItems.map(item => (
-                    <Tag key={item} color="geekblue" style={{ margin: '2px' }}>{item}</Tag>
-                  ))}
-                </Descriptions.Item>
-              </Descriptions>
-            )}
-
-            <Descriptions title="操作步骤" bordered style={{ marginBottom: 24 }}>
-              <Descriptions.Item label="步骤详情" span={3}>
-                <Steps direction="vertical" size="small">
-                  {viewingItem.procedureSteps.map((step, index) => (
-                    <Step key={index} title={`步骤 ${index + 1}`} description={step} />
-                  ))}
-                </Steps>
-              </Descriptions.Item>
-            </Descriptions>
-
-            <Descriptions title="质量控制与结果解读" bordered style={{ marginBottom: 24 }}>
-              <Descriptions.Item label="质量控制" span={3}>{viewingItem.qualityControl}</Descriptions.Item>
-              <Descriptions.Item label="结果解读" span={3}>{viewingItem.resultInterpretation}</Descriptions.Item>
-              <Descriptions.Item label="方法局限性" span={3}>{viewingItem.limitations}</Descriptions.Item>
-            </Descriptions>
-
-            {viewingItem.sopDocuments && viewingItem.sopDocuments.length > 0 && (
-              <Descriptions title="SOP文档" bordered style={{ marginBottom: 24 }}>
-                <Descriptions.Item label="文档列表" span={3}>
-                  <List
-                    dataSource={viewingItem.sopDocuments}
-                    renderItem={(doc) => (
-                      <List.Item
-                        actions={[
-                          <Button type="link" size="small" icon={<FileTextOutlined />}>
-                            查看
-                          </Button>
-                        ]}
-                      >
-                        <List.Item.Meta
-                          avatar={<FileProtectOutlined style={{ fontSize: '20px', color: '#1890ff' }} />}
-                          title={
-                            <div>
-                              {doc.name} 
-                              <Tag color={getSOPTypeColor(doc.type)} style={{ marginLeft: 8 }}>
-                                {getSOPTypeName(doc.type)}
-                              </Tag>
-                              <Tag color={doc.status === 'approved' ? 'green' : doc.status === 'draft' ? 'orange' : 'red'}>
-                                {doc.status === 'approved' ? '已批准' : doc.status === 'draft' ? '草稿' : '已过期'}
-                              </Tag>
-                            </div>
-                          }
-                          description={
-                            <div>
-                              <div>版本: {doc.version} | 审批人: {doc.approver}</div>
-                              <div>上传日期: {doc.uploadDate}</div>
-                            </div>
-                          }
-                        />
-                      </List.Item>
-                    )}
-                  />
-                </Descriptions.Item>
-              </Descriptions>
-            )}
-
-            <Descriptions title="参考文献" bordered style={{ marginBottom: 24 }}>
-              <Descriptions.Item label="文献列表" span={3}>
-                <List
-                  size="small"
-                  dataSource={viewingItem.references}
-                  renderItem={(item, index) => (
-                    <List.Item>
-                      <Text>{index + 1}. {item}</Text>
-                    </List.Item>
-                  )}
-                />
-              </Descriptions.Item>
-            </Descriptions>
-
-            <Descriptions title="版本信息" bordered>
-              <Descriptions.Item label="创建时间">{viewingItem.createdAt}</Descriptions.Item>
-              <Descriptions.Item label="更新时间">{viewingItem.updatedAt}</Descriptions.Item>
-            </Descriptions>
-          </div>
-        )}
-      </Drawer>
-
+      {/* 新增/编辑弹窗 */}
       <Modal
-        title={editingItem ? '编辑方法学' : '添加方法学'}
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
+        title={editingItem?.id ? '编辑方法学' : '新增方法学'}
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
         footer={null}
-        width={1000}
+        width={1200}
+        destroyOnClose
       >
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
+          initialValues={{
+            status: MethodologyStatus.ACTIVE,
+            category: MethodologyCategory.MOLECULAR_BIOLOGY,
+            detectionType: DetectionType.QUALITATIVE,
+            technologyPlatform: TechnologyPlatform.PCR
+          }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="name"
-              label="方法学名称"
-              rules={[{ required: true, message: '请输入方法学名称' }]}
-            >
-              <Input placeholder="请输入方法学名称" />
-            </Form.Item>
+          <Tabs defaultActiveKey="basic">
+            <TabPane tab="基本信息" key="basic">
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label="方法学编号"
+                    name="code"
+                    rules={[{ required: true, message: '请输入方法学编号' }]}
+                  >
+                    <Input placeholder="如：M-MOL-004" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="方法学名称"
+                    name="name"
+                    rules={[{ required: true, message: '请输入方法学名称' }]}
+                  >
+                    <Input placeholder="请输入方法学名称" />
+                  </Form.Item>
+                </Col>
+              </Row>
+              
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label="英文名称"
+                    name="englishName"
+                  >
+                    <Input placeholder="请输入英文名称" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="方法学分类"
+                    name="category"
+                    rules={[{ required: true, message: '请选择方法学分类' }]}
+                  >
+                    <Select placeholder="请选择方法学分类">
+                      <Option value={MethodologyCategory.MOLECULAR_BIOLOGY}>分子生物学</Option>
+                      <Option value={MethodologyCategory.IMMUNOLOGY}>免疫学</Option>
+                      <Option value={MethodologyCategory.MICROBIOLOGY}>微生物学</Option>
+                      <Option value={MethodologyCategory.BIOCHEMISTRY}>生物化学</Option>
+                      <Option value={MethodologyCategory.CYTOGENETICS}>细胞遗传学</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <Form.Item
-              name="code"
-              label="方法学编码"
-              rules={[{ required: true, message: '请输入方法学编码' }]}
-            >
-              <Input placeholder="请输入方法学编码" />
-            </Form.Item>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label="技术平台"
+                    name="technologyPlatform"
+                    rules={[{ required: true, message: '请选择技术平台' }]}
+                  >
+                    <Select placeholder="请选择技术平台">
+                      <Option value={TechnologyPlatform.PCR}>PCR平台</Option>
+                      <Option value={TechnologyPlatform.DIGITAL_PCR}>数字PCR平台</Option>
+                      <Option value={TechnologyPlatform.NGS}>二代测序平台</Option>
+                      <Option value={TechnologyPlatform.SANGER}>Sanger测序平台</Option>
+                      <Option value={TechnologyPlatform.ELISA}>ELISA平台</Option>
+                      <Option value={TechnologyPlatform.CULTURE}>培养平台</Option>
+                      <Option value={TechnologyPlatform.MASS_SPEC}>质谱平台</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="检测类型"
+                    name="detectionType"
+                    rules={[{ required: true, message: '请选择检测类型' }]}
+                  >
+                    <Select placeholder="请选择检测类型">
+                      <Option value={DetectionType.QUALITATIVE}>定性检测</Option>
+                      <Option value={DetectionType.QUANTITATIVE}>定量检测</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <Form.Item
-              name="category"
-              label="方法学类别"
-              rules={[{ required: true, message: '请选择方法学类别' }]}
-            >
-              <Select placeholder="请选择方法学类别">
-                <Option value="基因测序">基因测序</Option>
-                <Option value="基因扩增">基因扩增</Option>
-                <Option value="细胞遗传学">细胞遗传学</Option>
-                <Option value="免疫学">免疫学</Option>
-                <Option value="生化检测">生化检测</Option>
-                <Option value="病理学">病理学</Option>
-              </Select>
-            </Form.Item>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label="状态"
+                    name="status"
+                    rules={[{ required: true, message: '请选择状态' }]}
+                  >
+                    <Radio.Group>
+                      <Radio value={MethodologyStatus.ACTIVE}>启用</Radio>
+                      <Radio value={MethodologyStatus.INACTIVE}>停用</Radio>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+              </Row>
 
-            <Form.Item
-              name="version"
-              label="版本号"
-              rules={[{ required: true, message: '请输入版本号' }]}
-            >
-              <Input placeholder="如：V1.0" />
-            </Form.Item>
+              <Form.Item
+                label="方法学描述"
+                name="description"
+                rules={[{ required: true, message: '请输入方法学描述' }]}
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder="请输入方法学描述"
+                  showCount
+                  maxLength={500}
+                />
+              </Form.Item>
 
-            <Form.Item
-              name="effectiveDate"
-              label="生效日期"
-              rules={[{ required: true, message: '请选择生效日期' }]}
-            >
-              <Input type="date" />
-            </Form.Item>
+              <Form.Item
+                label="技术原理"
+                name="technicalPrinciple"
+                rules={[{ required: true, message: '请输入技术原理' }]}
+              >
+                <TextArea 
+                  rows={10} 
+                  placeholder="请详细描述技术原理..."
+                  showCount
+                  maxLength={2000}
+                />
+              </Form.Item>
+            </TabPane>
+          </Tabs>
 
-            <Form.Item
-              name="reviewDate"
-              label="复审日期"
-              rules={[{ required: true, message: '请选择复审日期' }]}
-            >
-              <Input type="date" />
-            </Form.Item>
-
-            <Form.Item
-              name="approver"
-              label="审批人"
-              rules={[{ required: true, message: '请输入审批人' }]}
-            >
-              <Input placeholder="请输入审批人姓名" />
-            </Form.Item>
-
-            <Form.Item
-              name="isActive"
-              label="状态"
-              valuePropName="checked"
-              initialValue={true}
-            >
-              <Switch checkedChildren="有效" unCheckedChildren="失效" />
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            name="principle"
-            label="检测原理"
-            rules={[{ required: true, message: '请输入检测原理' }]}
-          >
-            <TextArea rows={3} placeholder="请详细描述检测原理" />
-          </Form.Item>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="equipment"
-              label="所需设备"
-              rules={[{ required: true, message: '请选择所需设备' }]}
-            >
-              <Select mode="tags" placeholder="请输入或选择所需设备">
-                <Option value="Illumina NovaSeq 6000">Illumina NovaSeq 6000</Option>
-                <Option value="ABI 7500实时PCR仪">ABI 7500实时PCR仪</Option>
-                <Option value="ABI 3730xl测序仪">ABI 3730xl测序仪</Option>
-                <Option value="荧光显微镜">荧光显微镜</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="reagents"
-              label="所需试剂"
-              rules={[{ required: true, message: '请选择所需试剂' }]}
-            >
-              <Select mode="tags" placeholder="请输入或选择所需试剂" />
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            name="sampleRequirement"
-            label="样本要求"
-            rules={[{ required: true, message: '请输入样本要求' }]}
-          >
-            <TextArea rows={2} placeholder="请描述样本的质量和数量要求" />
-          </Form.Item>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="detectionRange"
-              label="检测范围"
-              rules={[{ required: true, message: '请输入检测范围' }]}
-            >
-              <Input placeholder="请输入检测范围" />
-            </Form.Item>
-
-            <Form.Item
-              name="sensitivity"
-              label="灵敏度"
-              rules={[{ required: true, message: '请输入灵敏度' }]}
-            >
-              <Input placeholder="如：≥99%" />
-            </Form.Item>
-
-            <Form.Item
-              name="specificity"
-              label="特异性"
-              rules={[{ required: true, message: '请输入特异性' }]}
-            >
-              <Input placeholder="如：≥99.5%" />
-            </Form.Item>
-
-            <Form.Item
-              name="precision"
-              label="精密度"
-              rules={[{ required: true, message: '请输入精密度' }]}
-            >
-              <Input placeholder="如：CV≤5%" />
-            </Form.Item>
-
-            <Form.Item
-              name="accuracy"
-              label="准确度"
-              rules={[{ required: true, message: '请输入准确度' }]}
-            >
-              <Input placeholder="如：≥99%" />
-            </Form.Item>
-
-            <Form.Item
-              name="detectionLimit"
-              label="检测限"
-            >
-              <Input placeholder="如：5% VAF" />
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            name="linearRange"
-            label="线性范围"
-          >
-            <Input placeholder="如：10ng-1μg" />
-          </Form.Item>
-
-          <Form.Item
-            name="throughput"
-            label="通量"
-          >
-            <Input placeholder="如：96样本/批次" />
-          </Form.Item>
-
-          <Form.Item
-            name="reportableRange"
-            label="报告范围"
-          >
-            <Input placeholder="如：0.1%-100% VAF" />
-          </Form.Item>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="cvRequirement"
-              label="CV要求(%)"
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                precision={1}
-                placeholder="如：5.0"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="biasRequirement"
-              label="偏倚要求(%)"
-            >
-              <InputNumber 
-                min={0} 
-                max={100} 
-                precision={1}
-                placeholder="如：10.0"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-          </div>
-
-          <Divider orientation="left">仪器要求</Divider>
-
-          <Form.Item
-            name="mainInstruments"
-            label="主要仪器"
-            rules={[{ required: true, message: '请选择主要仪器' }]}
-          >
-            <Select mode="tags" placeholder="请输入或选择主要仪器">
-              <Option value="Illumina NovaSeq 6000">Illumina NovaSeq 6000</Option>
-              <Option value="ABI 7500实时PCR仪">ABI 7500实时PCR仪</Option>
-              <Option value="ABI 3730xl测序仪">ABI 3730xl测序仪</Option>
-              <Option value="荧光显微镜">荧光显微镜</Option>
-              <Option value="离心机">离心机</Option>
-              <Option value="移液器">移液器</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="auxiliaryInstruments"
-            label="辅助仪器"
-          >
-            <Select mode="tags" placeholder="请输入或选择辅助仪器">
-              <Option value="涡旋混合器">涡旋混合器</Option>
-              <Option value="恒温水浴">恒温水浴</Option>
-              <Option value="电泳仪">电泳仪</Option>
-              <Option value="紫外分光光度计">紫外分光光度计</Option>
-            </Select>
-          </Form.Item>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="calibrationRequirements"
-              label="校准要求"
-              rules={[{ required: true, message: '请输入校准要求' }]}
-            >
-              <TextArea rows={2} placeholder="请描述仪器校准的频率和标准" />
-            </Form.Item>
-
-            <Form.Item
-              name="maintenanceSchedule"
-              label="维护计划"
-              rules={[{ required: true, message: '请输入维护计划' }]}
-            >
-              <TextArea rows={2} placeholder="请描述仪器维护的计划和要求" />
-            </Form.Item>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="temperature"
-              label="温度要求"
-              rules={[{ required: true, message: '请输入温度要求' }]}
-            >
-              <Input placeholder="如：18-25℃" />
-            </Form.Item>
-
-            <Form.Item
-              name="humidity"
-              label="湿度要求"
-              rules={[{ required: true, message: '请输入湿度要求' }]}
-            >
-              <Input placeholder="如：30-70%" />
-            </Form.Item>
-
-            <Form.Item
-              name="ventilation"
-              label="通风要求"
-              rules={[{ required: true, message: '请输入通风要求' }]}
-            >
-              <Input placeholder="如：每小时换气6次" />
-            </Form.Item>
-          </div>
-
-          <Divider orientation="left">样本要求</Divider>
-
-          <Form.Item
-            name="sampleTypes"
-            label="样本类型"
-            rules={[{ required: true, message: '请选择样本类型' }]}
-          >
-            <Select mode="tags" placeholder="请选择或输入样本类型">
-              <Option value="全血">全血</Option>
-              <Option value="血浆">血浆</Option>
-              <Option value="血清">血清</Option>
-              <Option value="唾液">唾液</Option>
-              <Option value="尿液">尿液</Option>
-              <Option value="组织">组织</Option>
-              <Option value="细胞">细胞</Option>
-              <Option value="DNA">DNA</Option>
-              <Option value="RNA">RNA</Option>
-            </Select>
-          </Form.Item>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="minimumVolume"
-              label="最小体积"
-              rules={[{ required: true, message: '请输入最小体积' }]}
-            >
-              <Input placeholder="如：2mL" />
-            </Form.Item>
-
-            <Form.Item
-              name="qualityRequirements"
-              label="质量要求"
-              rules={[{ required: true, message: '请输入质量要求' }]}
-            >
-              <Input placeholder="如：OD260/280≥1.8" />
-            </Form.Item>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="storageConditions"
-              label="保存条件"
-              rules={[{ required: true, message: '请输入保存条件' }]}
-            >
-              <Input placeholder="如：-80℃长期保存" />
-            </Form.Item>
-
-            <Form.Item
-              name="transportRequirements"
-              label="运输要求"
-              rules={[{ required: true, message: '请输入运输要求' }]}
-            >
-              <Input placeholder="如：干冰运输，24小时内到达" />
-            </Form.Item>
-          </div>
-
-          <Form.Item
-            name="pretreatmentSteps"
-            label="预处理步骤"
-          >
-            <TextArea 
-              rows={3} 
-              placeholder="请输入预处理步骤，每行一个步骤" 
-            />
-          </Form.Item>
-
-          <Divider orientation="left">关联信息</Divider>
-
-          <Form.Item
-            name="associatedDetectionItems"
-            label="关联检测项目"
-          >
-            <Select mode="tags" placeholder="请选择关联的检测项目">
-              <Option value="肿瘤基因检测">肿瘤基因检测</Option>
-              <Option value="遗传病筛查">遗传病筛查</Option>
-              <Option value="药物基因组学">药物基因组学</Option>
-              <Option value="病原体检测">病原体检测</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="status"
-            label="方法学状态"
-            rules={[{ required: true, message: '请选择方法学状态' }]}
-            initialValue="active"
-          >
-            <Select placeholder="请选择方法学状态">
-              <Option value="active">有效</Option>
-              <Option value="pending">待审核</Option>
-              <Option value="inactive">无效</Option>
-            </Select>
-          </Form.Item>
-
-          <Divider orientation="left">操作流程</Divider>
-
-          <Form.Item
-            name="procedureSteps"
-            label="操作步骤"
-            rules={[{ required: true, message: '请输入操作步骤' }]}
-          >
-            <TextArea 
-              rows={4} 
-              placeholder="请输入操作步骤，每行一个步骤" 
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="qualityControl"
-            label="质量控制"
-            rules={[{ required: true, message: '请输入质量控制要求' }]}
-          >
-            <TextArea rows={2} placeholder="请描述质量控制要求和标准" />
-          </Form.Item>
-
-          <Form.Item
-            name="resultInterpretation"
-            label="结果解读"
-            rules={[{ required: true, message: '请输入结果解读标准' }]}
-          >
-            <TextArea rows={2} placeholder="请描述结果解读的标准和方法" />
-          </Form.Item>
-
-          <Form.Item
-            name="limitations"
-            label="方法局限性"
-            rules={[{ required: true, message: '请输入方法局限性' }]}
-          >
-            <TextArea rows={2} placeholder="请描述该方法的局限性和注意事项" />
-          </Form.Item>
-
-          <Divider orientation="left">SOP文档</Divider>
-
-          <Form.Item
-            name="sopDocuments"
-            label="SOP文档上传"
-          >
-            <Upload
-              multiple
-              beforeUpload={() => false}
-              onChange={(info) => {
-                // 这里可以处理文件上传逻辑
-                console.log('文件上传:', info.fileList);
-              }}
-            >
-              <Button icon={<UploadOutlined />}>上传SOP文档</Button>
-            </Upload>
-            <div style={{ marginTop: 8, color: '#666', fontSize: '12px' }}>
-              支持上传PDF、DOC、DOCX格式文件，单个文件不超过10MB
-            </div>
-          </Form.Item>
-
-          <Form.Item
-            name="references"
-            label="参考文献"
-            rules={[{ required: true, message: '请输入参考文献' }]}
-          >
-            <TextArea 
-              rows={3} 
-              placeholder="请输入参考文献，每行一个文献" 
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+          <Divider />
+          
+          <div style={{ textAlign: 'right' }}>
             <Space>
-              <Button onClick={() => setIsModalVisible(false)}>
-                取消
+              <Button onClick={() => setModalVisible(false)}>取消</Button>
+              <Button type="primary" htmlType="submit">
+                保存
               </Button>
               <Button type="primary" htmlType="submit">
-                {editingItem ? '更新' : '添加'}
+                保存并新增
               </Button>
             </Space>
-          </Form.Item>
+          </div>
         </Form>
       </Modal>
-    </Card>
+
+      {/* 详情抽屉 */}
+      <Drawer
+        title="方法学详情"
+        placement="right"
+        width={800}
+        open={detailVisible}
+        onClose={() => setDetailVisible(false)}
+      >
+        {viewingItem && (
+          <div>
+            <Tabs defaultActiveKey="basic">
+              <TabPane tab="基础信息" key="basic">
+                <Descriptions column={2} bordered>
+                  <Descriptions.Item label="方法学编号">{viewingItem.code}</Descriptions.Item>
+                  <Descriptions.Item label="状态">
+                    <Badge 
+                      status={getStatusConfig(viewingItem.status).color as any} 
+                      text={getStatusConfig(viewingItem.status).text} 
+                    />
+                  </Descriptions.Item>
+                  <Descriptions.Item label="方法学名称" span={2}>
+                    {viewingItem.name}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="英文名称" span={2}>
+                    {viewingItem.englishName || '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="方法学分类">
+                    <Tag color="blue">{getCategoryText(viewingItem.category)}</Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="技术平台">
+                    {getTechnologyPlatformText(viewingItem.technologyPlatform)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="检测类型">
+                    <Tag color={viewingItem.detectionType === DetectionType.QUANTITATIVE ? 'orange' : 'green'}>
+                      {getDetectionTypeText(viewingItem.detectionType)}
+                    </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="创建时间">{viewingItem.createdAt}</Descriptions.Item>
+                  <Descriptions.Item label="创建人">{viewingItem.createdBy}</Descriptions.Item>
+                  <Descriptions.Item label="更新时间">{viewingItem.updatedAt || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="更新人" span={2}>{viewingItem.updatedBy || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="方法学描述" span={2}>
+                    {viewingItem.description}
+                  </Descriptions.Item>
+                </Descriptions>
+              </TabPane>
+            </Tabs>
+
+            <Divider />
+            
+            <div style={{ textAlign: 'right' }}>
+              <Space>
+                <Button onClick={() => handleEdit(viewingItem)}>编辑</Button>
+                <Button onClick={() => handleCopy(viewingItem)}>复制新建</Button>
+                <Button onClick={() => setDetailVisible(false)}>返回列表</Button>
+              </Space>
+            </div>
+          </div>
+        )}
+      </Drawer>
+    </div>
   )
 }
 

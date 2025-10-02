@@ -352,6 +352,7 @@ const SOPConfig: React.FC = () => {
       dataIndex: 'name',
       key: 'name',
       width: 200,
+      ellipsis: true,
       render: (text: string, record: SOPTemplate) => (
         <div>
           <div style={{ fontWeight: 500 }}>{text}</div>

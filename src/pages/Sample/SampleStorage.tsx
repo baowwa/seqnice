@@ -737,141 +737,121 @@ const SampleStorage: React.FC = () => {
       >
         <Form
           form={form}
-          layout="vertical"
+          labelCol={{ span: 6 }}
+          wrapperCol={{ span: 18 }}
           onFinish={handleSave}
         >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="sampleCode"
-                label="样本编号"
-                rules={[{ required: true, message: '请输入样本编号' }]}
-              >
-                <Input placeholder="请输入样本编号" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="sampleName"
-                label="样本名称"
-                rules={[{ required: true, message: '请输入样本名称' }]}
-              >
-                <Input placeholder="请输入样本名称" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="sampleType"
-                label="样本类型"
-                rules={[{ required: true, message: '请选择样本类型' }]}
-              >
-                <Select placeholder="请选择样本类型">
-                  <Option value="土壤">土壤</Option>
-                  <Option value="水体">水体</Option>
-                  <Option value="植物">植物</Option>
-                  <Option value="动物">动物</Option>
-                  <Option value="微生物">微生物</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="storageCondition"
-                label="存储条件"
-                rules={[{ required: true, message: '请选择存储条件' }]}
-              >
-                <Select placeholder="请选择存储条件">
-                  <Option value="room_temp">室温</Option>
-                  <Option value="cold_4">4°C</Option>
-                  <Option value="frozen_minus20">-20°C</Option>
-                  <Option value="frozen_minus80">-80°C</Option>
-                  <Option value="liquid_nitrogen">液氮</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="quantity"
-                label="总数量"
-                rules={[{ required: true, message: '请输入总数量' }]}
-              >
-                <InputNumber min={0} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="remainingQuantity"
-                label="剩余数量"
-                rules={[{ required: true, message: '请输入剩余数量' }]}
-              >
-                <InputNumber min={0} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="unit"
-                label="单位"
-                rules={[{ required: true, message: '请输入单位' }]}
-              >
-                <Select placeholder="请选择单位">
-                  <Option value="ml">ml</Option>
-                  <Option value="μl">μl</Option>
-                  <Option value="g">g</Option>
-                  <Option value="mg">mg</Option>
-                  <Option value="个">个</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="storageLocation"
-                label="存储位置"
-                rules={[{ required: true, message: '请输入存储位置' }]}
-              >
-                <Input placeholder="请输入存储位置" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="position"
-                label="位置编号"
-                rules={[{ required: true, message: '请输入位置编号' }]}
-              >
-                <Input placeholder="如：A1-01" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="containerType"
-                label="容器类型"
-                rules={[{ required: true, message: '请选择容器类型' }]}
-              >
-                <Select placeholder="请选择容器类型">
-                  <Option value="冷冻管">冷冻管</Option>
-                  <Option value="离心管">离心管</Option>
-                  <Option value="样本袋">样本袋</Option>
-                  <Option value="培养皿">培养皿</Option>
-                  <Option value="试管">试管</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="expiryDate"
-                label="过期日期"
-              >
-                <Input type="date" />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            name="sampleCode"
+            label="样本编号"
+            rules={[{ required: true, message: '请输入样本编号' }]}
+          >
+            <Input placeholder="请输入样本编号" />
+          </Form.Item>
+
+          <Form.Item
+            name="sampleName"
+            label="样本名称"
+            rules={[{ required: true, message: '请输入样本名称' }]}
+          >
+            <Input placeholder="请输入样本名称" />
+          </Form.Item>
+
+          <Form.Item
+            name="sampleType"
+            label="样本类型"
+            rules={[{ required: true, message: '请选择样本类型' }]}
+          >
+            <Select placeholder="请选择样本类型">
+              <Option value="土壤">土壤</Option>
+              <Option value="水体">水体</Option>
+              <Option value="植物">植物</Option>
+              <Option value="动物">动物</Option>
+              <Option value="微生物">微生物</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="storageCondition"
+            label="存储条件"
+            rules={[{ required: true, message: '请选择存储条件' }]}
+          >
+            <Select placeholder="请选择存储条件">
+              <Option value="room_temp">室温</Option>
+              <Option value="cold_4">4°C</Option>
+              <Option value="frozen_minus20">-20°C</Option>
+              <Option value="frozen_minus80">-80°C</Option>
+              <Option value="liquid_nitrogen">液氮</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="quantity"
+            label="总数量"
+            rules={[{ required: true, message: '请输入总数量' }]}
+          >
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="remainingQuantity"
+            label="剩余数量"
+            rules={[{ required: true, message: '请输入剩余数量' }]}
+          >
+            <InputNumber min={0} style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="unit"
+            label="单位"
+            rules={[{ required: true, message: '请输入单位' }]}
+          >
+            <Select placeholder="请选择单位">
+              <Option value="ml">ml</Option>
+              <Option value="μl">μl</Option>
+              <Option value="g">g</Option>
+              <Option value="mg">mg</Option>
+              <Option value="个">个</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="storageLocation"
+            label="存储位置"
+            rules={[{ required: true, message: '请输入存储位置' }]}
+          >
+            <Input placeholder="请输入存储位置" />
+          </Form.Item>
+
+          <Form.Item
+            name="position"
+            label="位置编号"
+            rules={[{ required: true, message: '请输入位置编号' }]}
+          >
+            <Input placeholder="如：A1-01" />
+          </Form.Item>
+
+          <Form.Item
+            name="containerType"
+            label="容器类型"
+            rules={[{ required: true, message: '请选择容器类型' }]}
+          >
+            <Select placeholder="请选择容器类型">
+              <Option value="冷冻管">冷冻管</Option>
+              <Option value="离心管">离心管</Option>
+              <Option value="样本袋">样本袋</Option>
+              <Option value="培养皿">培养皿</Option>
+              <Option value="试管">试管</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="expiryDate"
+            label="过期日期"
+          >
+            <Input type="date" />
+          </Form.Item>
+
           <Form.Item
             name="notes"
             label="备注"

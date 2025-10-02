@@ -200,16 +200,19 @@ const CustomerManagement: React.FC = () => {
       title: '客户编码',
       dataIndex: 'code',
       key: 'code',
-      width: 120
+      width: 120,
+      ellipsis: true
     },
     {
       title: '客户名称',
       dataIndex: 'name',
       key: 'name',
+      width: 150,
+      ellipsis: true,
       render: (text: string) => <span style={{ fontWeight: 500 }}>{text}</span>
     },
     {
-      title: '客户类型',
+      title: '客户分类',
       dataIndex: 'type',
       key: 'type',
       width: 100,
@@ -227,19 +230,22 @@ const CustomerManagement: React.FC = () => {
       title: '联系人',
       dataIndex: 'contact',
       key: 'contact',
-      width: 100
+      width: 100,
+      ellipsis: true
     },
     {
       title: '联系电话',
       dataIndex: 'phone',
       key: 'phone',
-      width: 130
+      width: 130,
+      ellipsis: true
     },
     {
       title: '邮箱',
       dataIndex: 'email',
       key: 'email',
-      width: 180
+      width: 180,
+      ellipsis: true
     },
     {
       title: '状态',
@@ -304,7 +310,7 @@ const CustomerManagement: React.FC = () => {
               style={{ width: 250 }}
             />
             <Select
-              placeholder="客户类型"
+              placeholder="客户分类"
               value={typeFilter}
               onChange={setTypeFilter}
               style={{ width: 120 }}
@@ -339,6 +345,7 @@ const CustomerManagement: React.FC = () => {
           dataSource={filteredCustomers}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 950 }}
           pagination={{
             total: filteredCustomers.length,
             pageSize: 10,
@@ -380,10 +387,10 @@ const CustomerManagement: React.FC = () => {
 
           <Form.Item
             name="type"
-            label="客户类型"
-            rules={[{ required: true, message: '请选择客户类型' }]}
+            label="客户分类"
+            rules={[{ required: true, message: '请选择客户分类' }]}
           >
-            <Select placeholder="请选择客户类型">
+            <Select placeholder="请选择客户分类">
               <Option value="hospital">医院</Option>
               <Option value="research">科研院所</Option>
               <Option value="company">企业</Option>

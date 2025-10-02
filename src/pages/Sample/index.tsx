@@ -800,112 +800,96 @@ const SampleReceiving: React.FC = () => {
       >
         <Form
           form={form}
-          layout="vertical"
+          labelCol={{ span: 6 }}
+          wrapperCol={{ span: 18 }}
           onFinish={handleSaveSample}
         >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="样本编号"
-                name="code"
-                rules={[{ required: true, message: '请输入样本编号' }]}
-              >
-                <Input placeholder="请输入样本编号" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="样本类型"
-                name="sampleTypeId"
-                rules={[{ required: true, message: '请选择样本类型' }]}
-              >
-                <Select placeholder="请选择样本类型">
-                  {sampleTypes.map(type => (
-                    <Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="样本名称"
-                name="name"
-                rules={[{ required: true, message: '请输入样本名称' }]}
-              >
-                <Input placeholder="请输入样本名称" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="所属项目"
-                name="projectId"
-                rules={[{ required: true, message: '请选择所属项目' }]}
-              >
-                <Select placeholder="请选择所属项目">
-                  {projects.map(project => (
-                    <Option key={project.id} value={project.id}>
-                      {project.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="接收日期"
-                name="receivedDate"
-                rules={[{ required: true, message: '请选择接收日期' }]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="预期完成日期"
-                name="expectedDate"
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                label="体积 (mL)"
-                name="volume"
-              >
-                <Input type="number" placeholder="请输入体积" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="浓度 (ng/μL)"
-                name="concentration"
-              >
-                <Input type="number" placeholder="请输入浓度" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                label="优先级"
-                name="priority"
-                initialValue="medium"
-              >
-                <Select>
-                  <Option value="low">低</Option>
-                  <Option value="medium">中</Option>
-                  <Option value="high">高</Option>
-                  <Option value="urgent">紧急</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            label="样本编号"
+            name="code"
+            rules={[{ required: true, message: '请输入样本编号' }]}
+          >
+            <Input placeholder="请输入样本编号" />
+          </Form.Item>
+
+          <Form.Item
+            label="样本类型"
+            name="sampleTypeId"
+            rules={[{ required: true, message: '请选择样本类型' }]}
+          >
+            <Select placeholder="请选择样本类型">
+              {sampleTypes.map(type => (
+                <Option key={type.id} value={type.id}>
+                  {type.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="样本名称"
+            name="name"
+            rules={[{ required: true, message: '请输入样本名称' }]}
+          >
+            <Input placeholder="请输入样本名称" />
+          </Form.Item>
+
+          <Form.Item
+            label="所属项目"
+            name="projectId"
+            rules={[{ required: true, message: '请选择所属项目' }]}
+          >
+            <Select placeholder="请选择所属项目">
+              {projects.map(project => (
+                <Option key={project.id} value={project.id}>
+                  {project.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="接收日期"
+            name="receivedDate"
+            rules={[{ required: true, message: '请选择接收日期' }]}
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            label="预期完成日期"
+            name="expectedDate"
+          >
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            label="体积 (mL)"
+            name="volume"
+          >
+            <Input type="number" placeholder="请输入体积" />
+          </Form.Item>
+
+          <Form.Item
+            label="浓度 (ng/μL)"
+            name="concentration"
+          >
+            <Input type="number" placeholder="请输入浓度" />
+          </Form.Item>
+
+          <Form.Item
+            label="优先级"
+            name="priority"
+            initialValue="medium"
+          >
+            <Select>
+              <Option value="low">低</Option>
+              <Option value="medium">中</Option>
+              <Option value="high">高</Option>
+              <Option value="urgent">紧急</Option>
+            </Select>
+          </Form.Item>
+
           <Form.Item
             label="备注信息"
             name="notes"

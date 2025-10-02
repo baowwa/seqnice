@@ -141,10 +141,18 @@ const MainLayout: React.FC = () => {
         label: '检测项目',
         children: [
           { 
-            key: 'detection/test-item', 
-            label: '检测项目', 
+            key: 'detection/methodology', 
+            label: '方法学', 
             onClick: () => {
-              navigate('/detection/test-item')
+              navigate('/detection/methodology')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'detection/test-item-group', 
+            label: '检测项目分组', 
+            onClick: () => {
+              navigate('/detection/test-item-group')
               if (isMobile) setDrawerVisible(false)
             }
           },
@@ -157,10 +165,18 @@ const MainLayout: React.FC = () => {
             }
           },
           { 
-            key: 'detection/methodology', 
-            label: '方法学', 
+            key: 'detection/test-item', 
+            label: '检测项目', 
             onClick: () => {
-              navigate('/detection/methodology')
+              navigate('/detection/test-item')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'detection/test-item-relation', 
+            label: '检测项目关系配置', 
+            onClick: () => {
+              navigate('/detection/test-item-relation')
               if (isMobile) setDrawerVisible(false)
             }
           },
@@ -178,10 +194,24 @@ const MainLayout: React.FC = () => {
         key: 'project',
         icon: <ProjectOutlined />,
         label: '项目管理',
-        onClick: () => {
-          navigate('/project')
-          if (isMobile) setDrawerVisible(false)
-        }
+        children: [
+          { 
+            key: 'project/category', 
+            label: '项目分类', 
+            onClick: () => {
+              navigate('/project/category')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'project/management', 
+            label: '项目管理', 
+            onClick: () => {
+              navigate('/project/management')
+              if (isMobile) setDrawerVisible(false)
+            }
+          }
+        ]
       },
       {
         key: 'sample',
