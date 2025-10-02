@@ -53,6 +53,8 @@ interface EquipmentBasic {
   code: string
   /** 设备名称 */
   name: string
+  /** SOP配置编码 */
+  sopConfigCode?: string
 }
 
 /**
@@ -67,6 +69,8 @@ interface ReagentBasic {
   name: string
   /** 推荐SOP模板ID（可选） */
   recommendedSOPTemplateId?: string
+  /** SOP配置编码 */
+  sopConfigCode?: string
 }
 
 /**
@@ -136,18 +140,18 @@ const TestItemRelationManagement: React.FC = () => {
   const sampleTypes = ['血液', '组织', '唾液', '血浆', '骨髓', '尿液']
 
   const equipments: EquipmentBasic[] = [
-    { id: 'E-001', code: 'EQ001', name: 'Illumina NextSeq 550' },
-    { id: 'E-002', code: 'EQ002', name: 'ABI 7500 Real-Time PCR' },
-    { id: 'E-003', code: 'EQ003', name: 'Thermo Fisher Ion Torrent' },
-    { id: 'E-004', code: 'EQ004', name: 'Illumina NovaSeq 6000' },
-    { id: 'E-005', code: 'EQ005', name: 'Roche LightCycler 480' }
+    { id: 'E-001', code: 'EQ001', name: 'Illumina NextSeq 550', sopConfigCode: 'SOP-EQ001' },
+    { id: 'E-002', code: 'EQ002', name: 'ABI 7500 Real-Time PCR', sopConfigCode: 'SOP-EQ002' },
+    { id: 'E-003', code: 'EQ003', name: 'Thermo Fisher Ion Torrent', sopConfigCode: 'SOP-EQ003' },
+    { id: 'E-004', code: 'EQ004', name: 'Illumina NovaSeq 6000', sopConfigCode: 'SOP-EQ004' },
+    { id: 'E-005', code: 'EQ005', name: 'Roche LightCycler 480', sopConfigCode: 'SOP-EQ005' }
   ]
 
   const reagents: ReagentBasic[] = [
-    { id: 'R-001', code: 'RG001', name: 'Nextera XT Library Prep Kit', recommendedSOPTemplateId: 'illumina_nextera_xt' },
-    { id: 'R-002', code: 'RG002', name: 'QIAamp DNA Mini Kit', recommendedSOPTemplateId: 'dna_extraction_qiaamp' },
-    { id: 'R-003', code: 'RG003', name: 'KAPA HyperPrep Kit', recommendedSOPTemplateId: 'kapa_hyperprep' },
-    { id: 'R-004', code: 'RG004', name: 'MagMAX Viral/Pathogen Nucleic Acid Isolation Kit', recommendedSOPTemplateId: 'magmax_isolation' }
+    { id: 'R-001', code: 'RG001', name: 'Nextera XT Library Prep Kit', recommendedSOPTemplateId: 'illumina_nextera_xt', sopConfigCode: 'SOP-RG001' },
+    { id: 'R-002', code: 'RG002', name: 'QIAamp DNA Mini Kit', recommendedSOPTemplateId: 'dna_extraction_qiaamp', sopConfigCode: 'SOP-RG002' },
+    { id: 'R-003', code: 'RG003', name: 'KAPA HyperPrep Kit', recommendedSOPTemplateId: 'kapa_hyperprep', sopConfigCode: 'SOP-RG003' },
+    { id: 'R-004', code: 'RG004', name: 'MagMAX Viral/Pathogen Nucleic Acid Isolation Kit', recommendedSOPTemplateId: 'magmax_isolation', sopConfigCode: 'SOP-RG004' }
   ]
 
   const analysisItems: AnalysisItemBasic[] = [

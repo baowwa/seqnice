@@ -84,6 +84,8 @@ interface EquipmentBasic {
   code: string
   /** 设备名称 */
   name: string
+  /** SOP配置编码 */
+  sopConfigCode?: string
 }
 
 /**
@@ -98,6 +100,8 @@ interface ReagentBasic {
   name: string
   /** 推荐SOP模板ID（可选） */
   recommendedSOPTemplateId?: string
+  /** SOP配置编码 */
+  sopConfigCode?: string
 }
 
 /**
@@ -166,18 +170,18 @@ const TestItemRelationForm: React.FC = () => {
   const sampleTypes = ['血液', '组织', '唾液', '尿液', '粪便', '土壤', '水样']
 
   const equipments: EquipmentBasic[] = [
-    { id: 'E-001', code: 'EQ001', name: 'Illumina NextSeq 550' },
-    { id: 'E-002', code: 'EQ002', name: 'ABI 7500 Real-Time PCR' },
-    { id: 'E-003', code: 'EQ003', name: 'Thermo Fisher Ion Torrent' },
-    { id: 'E-004', code: 'EQ004', name: 'Illumina NovaSeq 6000' },
-    { id: 'E-005', code: 'EQ005', name: 'Roche LightCycler 480' }
+    { id: 'E-001', code: 'EQ001', name: 'Illumina NextSeq 550', sopConfigCode: 'SOP-EQ001' },
+    { id: 'E-002', code: 'EQ002', name: 'ABI 7500 Real-Time PCR', sopConfigCode: 'SOP-EQ002' },
+    { id: 'E-003', code: 'EQ003', name: 'Thermo Fisher Ion Torrent', sopConfigCode: 'SOP-EQ003' },
+    { id: 'E-004', code: 'EQ004', name: 'Illumina NovaSeq 6000', sopConfigCode: 'SOP-EQ004' },
+    { id: 'E-005', code: 'EQ005', name: 'Roche LightCycler 480', sopConfigCode: 'SOP-EQ005' }
   ]
 
   const reagents: ReagentBasic[] = [
-    { id: 'R-001', code: 'RG001', name: 'Nextera XT Library Prep Kit', recommendedSOPTemplateId: 'illumina_nextera_xt' },
-    { id: 'R-002', code: 'RG002', name: 'QIAamp DNA Mini Kit', recommendedSOPTemplateId: 'dna_extraction_qiaamp' },
-    { id: 'R-003', code: 'RG003', name: 'KAPA HyperPrep Kit', recommendedSOPTemplateId: 'kapa_hyperprep' },
-    { id: 'R-004', code: 'RG004', name: 'MagMAX Viral/Pathogen Nucleic Acid Isolation Kit', recommendedSOPTemplateId: 'magmax_isolation' }
+    { id: 'R-001', code: 'RG001', name: 'Nextera XT Library Prep Kit', recommendedSOPTemplateId: 'illumina_nextera_xt', sopConfigCode: 'SOP-RG001' },
+    { id: 'R-002', code: 'RG002', name: 'QIAamp DNA Mini Kit', recommendedSOPTemplateId: 'dna_extraction_qiaamp', sopConfigCode: 'SOP-RG002' },
+    { id: 'R-003', code: 'RG003', name: 'KAPA HyperPrep Kit', recommendedSOPTemplateId: 'kapa_hyperprep', sopConfigCode: 'SOP-RG003' },
+    { id: 'R-004', code: 'RG004', name: 'MagMAX Viral/Pathogen Nucleic Acid Isolation Kit', recommendedSOPTemplateId: 'magmax_isolation', sopConfigCode: 'SOP-RG004' }
   ]
 
   const analysisItems: AnalysisItemBasic[] = [
@@ -494,6 +498,7 @@ const TestItemRelationForm: React.FC = () => {
             columns={[
               { title: '设备编码', dataIndex: 'code', key: 'code', render: (_: any, id: string) => equipments.find(e => e.id === id)?.code || '-' },
               { title: '设备名称', dataIndex: 'name', key: 'name', render: (_: any, id: string) => equipments.find(e => e.id === id)?.name || '-' },
+              { title: 'SOP配置编码', dataIndex: 'sopConfigCode', key: 'sopConfigCode', render: (_: any, id: string) => equipments.find(e => e.id === id)?.sopConfigCode || '-' },
               { 
                 title: '操作', 
                 key: 'action', 
@@ -521,6 +526,7 @@ const TestItemRelationForm: React.FC = () => {
             columns={[
               { title: '试剂编码', dataIndex: 'code', key: 'code', render: (_: any, id: string) => reagents.find(r => r.id === id)?.code || '-' },
               { title: '试剂名称', dataIndex: 'name', key: 'name', render: (_: any, id: string) => reagents.find(r => r.id === id)?.name || '-' },
+              { title: 'SOP配置编码', dataIndex: 'sopConfigCode', key: 'sopConfigCode', render: (_: any, id: string) => reagents.find(r => r.id === id)?.sopConfigCode || '-' },
               { 
                 title: '操作', 
                 key: 'action', 
