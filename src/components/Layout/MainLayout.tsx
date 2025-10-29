@@ -247,37 +247,13 @@ const MainLayout: React.FC = () => {
       {
         key: 'experiment',
         icon: <ExperimentOutlined />,
-        label: '实验流程',
+        label: '实验管理',
         children: [
           { 
-            key: 'experiment/task-center', 
-            label: '实验任务', 
+            key: 'experiment/dna-extraction', 
+            label: 'DNA提取', 
             onClick: () => {
-              navigate('/experiment/task-center')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          // { 
-          //   key: 'experiment/preprocessing', 
-          //   label: '前处理', 
-          //   onClick: () => {
-          //     navigate('/experiment/preprocessing')
-          //     if (isMobile) setDrawerVisible(false)
-          //   }
-          // },
-          // { 
-          //   key: 'experiment/library', 
-          //   label: '文库构建', 
-          //   onClick: () => {
-          //     navigate('/experiment/library')
-          //     if (isMobile) setDrawerVisible(false)
-          //   }
-          // },
-          { 
-            key: 'experiment/pooling', 
-            label: '混样记录', 
-            onClick: () => {
-              navigate('/experiment/pooling')
+              navigate('/experiment/dna-extraction')
               if (isMobile) setDrawerVisible(false)
             }
           },
@@ -286,6 +262,22 @@ const MainLayout: React.FC = () => {
             label: '上机测序', 
             onClick: () => {
               navigate('/experiment/sequencing')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'experiment/chip-usage-record', 
+            label: '芯片使用记录', 
+            onClick: () => {
+              navigate('/experiment/chip-usage-record')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          { 
+            key: 'experiment/chip-record-summary', 
+            label: '芯片记录汇总', 
+            onClick: () => {
+              navigate('/experiment/chip-record-summary')
               if (isMobile) setDrawerVisible(false)
             }
           }

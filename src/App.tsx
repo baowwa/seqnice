@@ -13,6 +13,7 @@ const SampleTracking = lazy(() => import('./pages/Sample/SampleTracking'))
 const SampleStorage = lazy(() => import('./pages/Sample/SampleStorage'))
 const ExperimentManagement = lazy(() => import('./pages/Experiment'))
 const ExperimentTaskCenter = lazy(() => import('./pages/Experiment/ExperimentTaskCenter'))
+const DNAExtraction = lazy(() => import('./pages/Experiment/DNAExtraction'))
 const Preprocessing = lazy(() => import('./pages/Experiment/Preprocessing'))
 const LibraryConstruction = lazy(() => import('./pages/Experiment/LibraryConstruction'))
 const SequencingTaskCenter = lazy(() => import('./pages/Experiment/SequencingTaskCenter'))
@@ -23,6 +24,8 @@ const BatchDetail = lazy(() => import('./pages/Experiment/BatchDetail'))
 const NucleicExtractionRecord = lazy(() => import('./pages/Experiment/NucleicExtractionRecord'))
 const PCRAmplificationRecord = lazy(() => import('./pages/Experiment/PCRAmplificationRecord'))
 const LibraryConstructionRecord = lazy(() => import('./pages/Experiment/LibraryConstructionRecord'))
+const ChipUsageRecord = lazy(() => import('./pages/Experiment/ChipUsageRecord'))
+const ChipRecordSummary = lazy(() => import('./pages/Experiment/ChipRecordSummary'))
 const ReportManagement = lazy(() => import('./pages/Report'))
 const ReportGeneration = lazy(() => import('./pages/Report/ReportGeneration'))
 const ReportReview = lazy(() => import('./pages/Report/ReportReview'))
@@ -137,6 +140,14 @@ const AppWithTheme: React.FC = () => {
               
               {/* 实验流程路由 */}
               <Route 
+                path="experiment/dna-extraction" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <DNAExtraction />
+                  </Suspense>
+                } 
+              />
+              <Route 
                 path="experiment/task-center" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
@@ -223,6 +234,24 @@ const AppWithTheme: React.FC = () => {
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <LibraryConstructionRecord />
+                  </Suspense>
+                } 
+              />
+              
+              {/* 新增的芯片管理页面路由 */}
+              <Route 
+                path="experiment/chip-usage-record" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ChipUsageRecord />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="experiment/chip-record-summary" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ChipRecordSummary />
                   </Suspense>
                 } 
               />
