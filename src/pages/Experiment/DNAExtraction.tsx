@@ -194,6 +194,9 @@ const DNAExtraction: React.FC = () => {
   const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
   const [selectedSamples, setSelectedSamples] = useState<Sample[]>([]);
   
+  // 抽屉中已选样本的复选框状态
+  const [selectedSampleKeys, setSelectedSampleKeys] = useState<React.Key[]>([]);
+  
   // 抽屉表单状态
   const [batchNumber, setBatchNumber] = useState<string>('');
   const [extractionDate, setExtractionDate] = useState<dayjs.Dayjs>(dayjs());
@@ -798,6 +801,7 @@ const DNAExtraction: React.FC = () => {
     setDrawerVisible(false);
     setSelectedRowKeys([]);
     setSelectedSamples([]);
+    setSelectedSampleKeys([]);
     
     // 清空表单状态
     setBatchNumber('');
@@ -806,6 +810,32 @@ const DNAExtraction: React.FC = () => {
     setReviewer('');
     setSelectedReagents([]);
     setSelectedEquipments([]);
+  };
+
+  /**
+   * 批量移除选中的样本
+   */
+  const handleRemoveSelectedSamples = () => {
+    if (selectedSampleKeys.length === 0) {
+      message.warning('请先选择要移除的样本');
+      return;
+    }
+    
+    Modal.confirm({
+      title: '确认移除',
+      content: `确定要移除选中的 ${selectedSampleKeys.length} 个样本吗？`,
+      onOk: () => {
+        // 从已选样本中移除选中的样本
+        const remainingSamples = selectedSamples.filter(sample => !selectedSampleKeys.includes(sample.id));
+        const remainingKeys = selectedRowKeys.filter(key => !selectedSampleKeys.includes(key));
+        
+        setSelectedSamples(remainingSamples);
+        setSelectedRowKeys(remainingKeys);
+        setSelectedSampleKeys([]);
+        
+        message.success(`成功移除 ${selectedSampleKeys.length} 个样本`);
+      }
+    });
   };
 
 
@@ -1269,7 +1299,16 @@ const DNAExtraction: React.FC = () => {
 
           {/* 选中的样本 */}
           <div>
-            <Title level={5}>选中的样本 ({selectedSamples.length})</Title>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Title level={5}>选中的样本 ({selectedSamples.length})</Title>
+              <Button 
+                danger
+                disabled={selectedSampleKeys.length === 0}
+                onClick={handleRemoveSelectedSamples}
+              >
+                移除选中 ({selectedSampleKeys.length})
+              </Button>
+            </div>
             <Table
               columns={[
                 {
@@ -1322,6 +1361,15 @@ const DNAExtraction: React.FC = () => {
               ]}
               dataSource={selectedSamples}
               rowKey="id"
+              rowSelection={{
+                selectedRowKeys: selectedSampleKeys,
+                onChange: (selectedKeys: React.Key[]) => {
+                  setSelectedSampleKeys(selectedKeys);
+                },
+                getCheckboxProps: () => ({
+                  // 所有样本都可以被选中移除
+                })
+              }}
               pagination={false}
               scroll={{ y: 300 }}
               size="small"
