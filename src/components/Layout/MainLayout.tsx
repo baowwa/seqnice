@@ -18,7 +18,8 @@ import {
   MenuOutlined,
   MoonOutlined,
   SunOutlined,
-  MedicineBoxOutlined
+  MedicineBoxOutlined,
+  FolderOutlined
 } from '@ant-design/icons'
 import { useTheme } from '../../contexts/ThemeContext'
 import ThemeSettings from '../ThemeSettings'
@@ -136,78 +137,33 @@ const MainLayout: React.FC = () => {
         ]
       },
       {
-        key: 'detection',
-        icon: <MedicineBoxOutlined />,
-        label: '检测项目',
+        key: 'project-archive',
+        icon: <FolderOutlined />,
+        label: '项目档案',
         children: [
           { 
-            key: 'detection/methodology', 
-            label: '方法学', 
+            key: 'project-archive/list', 
+            label: '项目档案', 
             onClick: () => {
-              navigate('/detection/methodology')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'detection/test-item-group', 
-            label: '检测项目分组', 
-            onClick: () => {
-              navigate('/detection/test-item-group')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'detection/analysis-item', 
-            label: '分析项目', 
-            onClick: () => {
-              navigate('/detection/analysis-item')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'detection/test-item', 
-            label: '检测项目', 
-            onClick: () => {
-              navigate('/detection/test-item')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'detection/test-item-relation', 
-            label: '检测项目关系配置', 
-            onClick: () => {
-              navigate('/detection/test-item-relation')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'detection/sop-config', 
-            label: '检测项目SOP配置', 
-            onClick: () => {
-              navigate('/detection/sop-config')
+              navigate('/project-archive')
               if (isMobile) setDrawerVisible(false)
             }
           }
         ]
       },
+      // 检测项目菜单已按要求移除
+
+      // 检验项目管理
       {
-        key: 'project',
-        icon: <ProjectOutlined />,
-        label: '项目管理',
+        key: 'inspection-project',
+        icon: <MedicineBoxOutlined />,
+        label: '检验项目管理',
         children: [
-          { 
-            key: 'project/category', 
-            label: '项目分类', 
+          {
+            key: 'inspection-project/library',
+            label: '检验项目库',
             onClick: () => {
-              navigate('/project/category')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
-            key: 'project/management', 
-            label: '项目管理', 
-            onClick: () => {
-              navigate('/project/management')
+              navigate('/inspection-project/library')
               if (isMobile) setDrawerVisible(false)
             }
           }
@@ -218,27 +174,27 @@ const MainLayout: React.FC = () => {
         icon: <ExperimentOutlined />,
         label: '样本管理',
         children: [
-          { 
-            key: 'sample/receiving', 
-            label: '样本接收', 
+          {
+            key: 'sample/list',
+            label: '样本接收',
             onClick: () => {
-              navigate('/sample/receiving')
+              navigate('/sample/list')
               if (isMobile) setDrawerVisible(false)
             }
           },
-          { 
-            key: 'sample/tracking', 
-            label: '样本追踪', 
+          {
+            key: 'sample/luckysheet-demo',
+            label: 'Luckysheet演示',
             onClick: () => {
-              navigate('/sample/tracking')
+              navigate('/sample/luckysheet-demo')
               if (isMobile) setDrawerVisible(false)
             }
           },
-          { 
-            key: 'sample/storage', 
-            label: '样本存储', 
+          {
+            key: 'sample/univer-demo',
+            label: 'Univer演示',
             onClick: () => {
-              navigate('/sample/storage')
+              navigate('/sample/univer-demo')
               if (isMobile) setDrawerVisible(false)
             }
           }
@@ -558,8 +514,10 @@ const MainLayout: React.FC = () => {
         </Header>
         
         <Content style={{
-          margin: themeConfig.compactMode ? '16px' : '24px',
-          padding: themeConfig.compactMode ? '16px' : '24px',
+          // 非紧凑模式：统一按 2px 间距更贴边布局
+          // 入参：无；出参：无（样式对象直接应用）
+          margin: themeConfig.compactMode ? '16px' : '2px',
+          padding: themeConfig.compactMode ? '16px' : '2px',
           background: themeConfig.mode === 'dark' ? '#141414' : '#f5f5f5',
           borderRadius: themeConfig.borderRadius,
           minHeight: 280,

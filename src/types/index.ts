@@ -10,6 +10,163 @@ export enum UserRole {
 }
 
 /**
+ * 项目档案状态枚举
+ */
+export enum ProjectArchiveStatus {
+  DRAFT = 'draft',           // 草稿
+  PENDING = 'pending',       // 待审核
+  APPROVED = 'approved',     // 审核通过
+  REJECTED = 'rejected',     // 审核拒绝
+  EXECUTING = 'executing',   // 执行中
+  COMPLETED = 'completed',   // 已完成
+  TERMINATED = 'terminated'  // 已终止
+}
+
+/**
+ * 项目阶段类型枚举
+ */
+export enum ProjectStageType {
+  RESEARCH_VALIDATION = 'research_validation',  // 研发验证
+  CLINICAL_VALIDATION = 'clinical_validation',  // 临床验证
+  PRODUCTION_VALIDATION = 'production_validation', // 生产验证
+  INSPECTION_SERVICE = 'inspection_service'     // 检测服务
+}
+
+/**
+ * 执行状态枚举
+ */
+export enum ExecuteStatus {
+  PENDING = 'pending',       // 待执行
+  EXECUTING = 'executing',   // 执行中
+  COMPLETED = 'completed'    // 已执行
+}
+
+/**
+ * 审核状态枚举
+ */
+export enum AuditStatus {
+  PENDING = 'pending',       // 待审核
+  APPROVED = 'approved',     // 审核通过
+  REJECTED = 'rejected'      // 审核拒绝
+}
+
+/**
+ * 分析类型枚举
+ */
+export enum AnalysisType {
+  VARIANT_ANALYSIS = 'variant_analysis',     // 变异分析
+  EXPRESSION_ANALYSIS = 'expression_analysis', // 表达分析
+  FUSION_ANALYSIS = 'fusion_analysis',       // 融合分析
+  CNV_ANALYSIS = 'cnv_analysis'             // CNV分析
+}
+
+/**
+ * 比较操作符枚举
+ */
+export enum ComparisonOperator {
+  GT = '>',      // 大于
+  GTE = '>=',    // 大于等于
+  LT = '<',      // 小于
+  LTE = '<=',    // 小于等于
+  EQ = '='       // 等于
+}
+
+/**
+ * 样本特征接口（非关系字段说明）
+ */
+export interface SampleCharacteristics {
+  sampleName: string;        // 样本名称
+  sampleType: string;        // 样本类型
+  sampleSource: string;      // 样本来源
+  samplePlanNum: number;     // 计划数量
+}
+
+/**
+ * 检测要求接口（列表）
+ */
+export interface DetectionRequirement {
+  analysisType: AnalysisType;  // 分析类型
+  testCode: string;            // 检测项目编码
+  testName: string;            // 检测项目名称
+  methodology: string;         // 方法学
+  equipmentPlatform: string;   // 仪器平台
+}
+
+/**
+ * 验证标准接口（最后项目的整体性能指标告警的验证标准）
+ */
+export interface ValidationStandard {
+  metricName: string;                    // 评价指标
+  comparisonOperator: ComparisonOperator; // 比较关系
+  metricThreshold: number;               // 指标阈值
+  metricUnit: string;                    // 单位
+  verificationMethod: string;            // 验证方法说明
+}
+
+/**
+ * 参与机构接口（参与机构（类似于通用组织））
+ */
+export interface ParticipatingOrganization {
+  orgNo: string;           // 机构编码
+  orgName: string;         // 机构名称
+  managerPerson: string;   // 机构负责人
+  contactPhone: string;    // 联系电话
+}
+
+/**
+ * 附件管理接口
+ */
+export interface AttachmentFile {
+  fileName: string;        // 文件名
+  fileUrl: string;         // 文件链接
+}
+
+/**
+ * 项目档案接口
+ */
+export interface ProjectArchive {
+  // 基本信息
+  manageOrgNo: string;           // 管理组织
+  projectCode: string;           // 项目编码
+  projectName: string;           // 项目（简称）名称
+  projectType: ProjectType;           // 项目类型
+  projectStageType: ProjectStageType; // 项目阶段类型
+  customerCode: string;          // 合作客户
+  contractNo: string;            // 关联合同编号
+  deptNo: string;                // 部门
+  projectManager: string;        // 项目负责人
+  planStartTime: string;         // 计划开始日期
+  planEndTime: string;           // 计划完成日期
+  parentProjectCode?: string;    // 所属项目编码
+  parentProjectName?: string;    // 所属项目名称
+  auditStatus: AuditStatus;      // 审核状态
+  projectStatus: ProjectArchiveStatus; // 项目状态
+  executeStatus: ExecuteStatus;  // 执行状态
+
+  // 样本特征（非关系字段说明）
+  sampleCharacteristics: SampleCharacteristics;
+
+  // 检测要求（列表）
+  detectionRequirements: DetectionRequirement[];
+
+  // 验证标准（最后项目的整体性能指标告警的验证标准）
+  validationStandards: ValidationStandard[];
+
+  // 参与机构（参与机构（类似于通用组织））
+  participatingOrganizations: ParticipatingOrganization[];
+
+  // 附件管理
+  attachmentFiles: AttachmentFile[];
+
+  // 系统字段
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
+/**
  * 样本状态枚举
  */
 export enum SampleStatus {

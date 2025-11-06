@@ -1,0 +1,596 @@
+/* 项目档案列表页面样式 */
+.project-archive-container {
+  background: #f5f5f5;
+  min-height: 100vh;
+  position: relative;
+  padding: 0 8px 8px 0; /* 顶部与左侧去除内边距，整体更贴左上 */
+}
+
+/* 左侧项目类型列 - 使用正常布局 */
+.project-archive-container .ant-row .ant-col:first-child {
+  height: calc(100vh - 80px);
+}
+
+.project-archive-container .ant-row .ant-col:first-child .ant-card {
+  height: 100%;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.project-archive-container .ant-row .ant-col:first-child .ant-card-body {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 右侧项目档案列 - 使用正常布局 */
+.project-archive-container .ant-row .ant-col:last-child {
+  /* 取消最小高度约束，按内容自适应，避免中部空白 */
+  min-height: auto;
+}
+
+.project-archive-container .ant-row .ant-col:last-child .ant-card {
+  /* 取消卡片的最小高度，按内容自适应 */
+  height: auto;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.project-archive-container .ant-row .ant-col:last-child .ant-card-body {
+  padding: 0;
+  /* 恢复为 Flex 布局以与原始结构保持一致 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 项目档案内容区域 */
+.project-archive-content {
+  /* 恢复为原始 Flex 布局 */
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.project-card {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.project-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.project-card-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.project-card-actions {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+  margin-top: auto;
+}
+
+/* 状态筛选按钮样式 */
+.status-filters {
+  padding: 8px 0;
+  margin-bottom: 8px !important;
+  background: transparent;
+  border-bottom: none;
+}
+
+.status-filters .ant-btn {
+  border-radius: 16px;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 12px;
+}
+
+.status-filters .ant-btn-primary {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3);
+}
+
+/* 内容头部样式 */
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.header-left h4 {
+  color: #262626;
+  font-weight: 600;
+}
+
+
+
+.header-right .ant-btn {
+  border-radius: 6px;
+  font-size: 14px;
+  height: 36px;
+  padding: 0 16px;
+}
+
+/* 视图模式按钮样式已移除：页面仅保留列表视图 */
+
+.project-archive-container .ant-row .ant-col:first-child .ant-card {
+  height: 100%;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.project-archive-container .ant-row .ant-col:first-child .ant-card-body {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 项目类型卡片 - 移除固定定位，改为填充父容器 */
+.project-types-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.project-types-header {
+  margin-bottom: 0;
+  padding: 12px 16px; /* 缩小上下左右留白，整体更上移、更紧凑 */
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.project-types-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0;
+  flex: 1;
+}
+
+.project-type-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  position: relative;
+}
+
+.project-type-item:hover {
+  background: #f5f5f5;
+}
+
+.project-type-item.active {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.project-type-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #1890ff;
+}
+
+.project-type-icon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.project-type-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.project-type-label {
+  font-weight: 500;
+}
+
+.project-type-count {
+  color: #666;
+  font-size: 12px;
+}
+
+/* 主要内容区域 */
+.project-main-content {
+  background: #fff;
+  border-radius: 0;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin-left: 0; /* 两列之间的间距由Row的gutter控制，此处保持0 */
+}
+
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px; /* 缩小上下左右留白，整体更上移、更紧凑 */
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.header-left h4 {
+  margin: 0;
+  color: #262626;
+}
+
+.content-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px; /* 缩小内边距，整体更上移、更紧凑 */
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.content-body {
+  padding: 0;
+  background: #fff;
+  flex: 1;
+  overflow: auto;
+}
+
+/* 看板视图样式已移除：仅保留表格视图 */
+
+/* Ant Design 组件样式覆盖 */
+.ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #262626;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+.ant-tag {
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* 移除与看板/单选按钮相关的覆盖样式 */
+
+.ant-input-search .ant-input-group .ant-input-affix-wrapper {
+  border-radius: 6px 0 0 6px;
+}
+
+.ant-input-search .ant-input-search-button {
+  border-radius: 0 6px 6px 0;
+}
+
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 自定义滚动条（看板相关）已移除 */
+
+/* 看板布局样式已移除 */
+
+
+
+/* 筛选和操作区域样式 */
+.filter-actions-section {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+/* 新增：两行工具栏容器 */
+.toolbar-container {
+  /* 与 DNA 提取的查询条件区域一致：降低占用空间 */
+  padding: 0;
+  border-bottom: none;
+  background: transparent;
+}
+
+/* Tabs 导航用于筛选，不使用内容面板，避免产生大空白 */
+.toolbar-container .ant-tabs-content-holder {
+  display: none;
+}
+
+/* 压缩 Tabs 导航与下方查询区之间的间距 */
+.toolbar-container .ant-tabs-nav {
+  margin-bottom: 0;
+}
+
+.toolbar-row1,
+.toolbar-row2 {
+  width: 100%;
+}
+
+/* 工具栏第一行采用左右布局：左侧状态筛选，右侧操作按钮 */
+.toolbar-row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbar-row1 .status-filters {
+  margin-bottom: 0 !important;
+}
+
+.toolbar-right {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.toolbar-right .ant-space {
+  flex-wrap: wrap;
+}
+
+.advanced-collapse {
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.toolbar-row2 .ant-form-item {
+  margin-bottom: 8px;
+}
+
+.status-filters .status-filter-btn {
+  margin-right: 8px;
+  border-radius: 4px;
+  font-weight: 400;
+}
+
+.status-filters .status-filter-btn:hover {
+  border-color: #40a9ff;
+  color: #40a9ff;
+}
+
+.action-buttons .ant-btn {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 操作按钮样式 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 工具栏第一行右侧操作区：右对齐并允许换行 */
+.toolbar-container .toolbar-row1 .action-buttons {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* 表格内的操作按钮样式 */
+.action-buttons .ant-btn-link,
+.action-buttons .ant-btn-text {
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  height: auto;
+  font-size: 12px;
+  border-radius: 0;
+  display: inline;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  min-width: auto;
+}
+
+/* 主要操作按钮保持正常样式 */
+.filter-actions-section .action-buttons .ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 4px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: auto;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+}
+
+.filter-actions-section .action-buttons .ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+  color: #fff;
+}
+
+.filter-actions-section .action-buttons .ant-btn-primary:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.action-buttons .ant-btn-link {
+  color: #1890ff;
+  background: transparent;
+  text-decoration: underline;
+}
+
+.action-buttons .ant-btn-link:hover {
+  background: transparent;
+  color: #096dd9;
+  text-decoration: underline;
+}
+
+.action-buttons .ant-btn-text {
+  color: #666;
+  background: transparent;
+  text-decoration: underline;
+}
+
+.action-buttons .ant-btn-text:hover {
+  background: transparent;
+  color: #262626;
+  text-decoration: underline;
+}
+
+.action-buttons .ant-btn-text.danger {
+  color: #ff4d4f;
+  text-decoration: underline;
+}
+
+.action-buttons .ant-btn-text.danger:hover {
+  background: transparent;
+  color: #cf1322;
+  text-decoration: underline;
+}
+
+/* 工具栏按钮样式 */
+.toolbar-right .ant-btn {
+  border-radius: 6px;
+  font-size: 13px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-right .ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.toolbar-right .ant-btn-default {
+  border-color: #d9d9d9;
+  color: #666;
+}
+
+/* 项目类型标签样式 */
+.project-type-tag {
+  border: none !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  line-height: 1.2 !important;
+  font-weight: 500 !important;
+}
+
+.project-type-tag.purple {
+  background-color: #722ed1 !important;
+  color: white !important;
+}
+
+.project-type-tag.green {
+  background-color: #52c41a !important;
+  color: white !important;
+}
+
+.project-type-tag.orange {
+  background-color: #fa8c16 !important;
+  color: white !important;
+}
+
+.project-type-tag.blue {
+  background-color: #1890ff !important;
+  color: white !important;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 1200px) {
+  .project-types-content {
+    gap: 12px;
+  }
+  
+  .project-type-item {
+    min-width: 100px;
+    padding: 10px 10px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .project-archive-container {
+    padding: 12px;
+  }
+  
+  .content-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .content-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .project-types-content {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .project-type-item {
+    min-width: auto;
+  }
+  
+  .content-header .header-right .ant-space {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .content-toolbar .toolbar-left,
+  .content-toolbar .toolbar-right {
+    width: 100%;
+  }
+}
+
+/* 确保表格容器始终可见 */
+.table-container {
+  /* 去掉占满剩余空间，使用内容高度，贴近工具栏 */
+  flex: 0 0 auto;
+  position: relative !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-top: 8px;
+}
+
+/* 确保表格本身始终可见（使用 antd 默认布局） */
+.table-container .ant-table-wrapper {
+}
+
+/* 修复固定列：恢复 antd 默认布局以启用 fixed 列 */
+.table-container .ant-table {
+  display: block !important;
+}
+
+
+
+/* 确保筛选操作区域不会挤压表格空间 */
+.filter-actions-section {
+  flex-shrink: 0; /* 不允许收缩 */
+}
+
+/* 操作列按钮保持常显（移除悬浮隐藏） */
+/* 入参：无；出参：无 */

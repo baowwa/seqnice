@@ -8,9 +8,11 @@ import './index.css'
 
 // 懒加载组件导入
 const Dashboard = lazy(() => import('./pages/Dashboard'))
-const SampleManagement = lazy(() => import('./pages/Sample'))
-const SampleTracking = lazy(() => import('./pages/Sample/SampleTracking'))
-const SampleStorage = lazy(() => import('./pages/Sample/SampleStorage'))
+const SampleReceiving = lazy(() => import('./pages/Sample/Receiving'))
+const SampleList = lazy(() => import('./pages/Sample/List'))
+const LuckysheetDemo = lazy(() => import('./pages/Sample/LuckysheetDemo'))
+// 显式使用 .tsx 扩展名以兼容 TypeScript bundler 解析
+const UniverDemo = lazy(() => import('./pages/Sample/UniverDemo.tsx'))
 const ExperimentManagement = lazy(() => import('./pages/Experiment'))
 const ExperimentTaskCenter = lazy(() => import('./pages/Experiment/ExperimentTaskCenter'))
 const DNAExtraction = lazy(() => import('./pages/Experiment/DNAExtraction'))
@@ -31,9 +33,11 @@ const ReportGeneration = lazy(() => import('./pages/Report/ReportGeneration'))
 const ReportReview = lazy(() => import('./pages/Report/ReportReview'))
 const UserManagement = lazy(() => import('./pages/User'))
 const ArchiveManagement = lazy(() => import('./pages/Archive'))
-const ProjectManagement = lazy(() => import('./pages/Project/ProjectManagement'))
+const ProjectArchive = lazy(() => import('./pages/ProjectArchive'))
+const ProjectArchiveDetail = lazy(() => import('./pages/ProjectArchive/ProjectArchiveDetail'))
+const ProjectArchiveCreate = lazy(() => import('./pages/ProjectArchive/ProjectArchiveCreate'))
 const AnalysisManagement = lazy(() => import('./pages/Analysis'))
-const DetectionManagement = lazy(() => import('./pages/Detection'))
+const InspectionProjectLibrary = lazy(() => import('./pages/InspectionProject/Library'))
 
 /**
  * 加载中组件
@@ -92,48 +96,81 @@ const AppWithTheme: React.FC = () => {
                 } 
               />
               
-              {/* 检测项目路由 */}
+              {/* 项目档案路由 */}
               <Route 
-                path="detection/*" 
+                path="project-archive" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
-                    <DetectionManagement />
+                    <ProjectArchive />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="project-archive/create" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ProjectArchiveCreate />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="project-archive/detail/:id" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ProjectArchiveDetail />
                   </Suspense>
                 } 
               />
               
-              {/* 项目管理路由 */}
+              {/* 检测项目路由按要求移除 */}
+              {/* 检验项目管理路由 */}
               <Route 
-                path="project/*" 
+                path="inspection-project/library" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
-                    <ProjectManagement />
+                    <InspectionProjectLibrary />
                   </Suspense>
                 } 
               />
               
-              {/* 样本管理路由 */}
+
+              
+              {/* 样本管理子页面已移除 */}
+              {/* 样本接收（样本录入） */}
               <Route 
                 path="sample/receiving" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
-                    <SampleManagement />
+                    <SampleReceiving />
                   </Suspense>
                 } 
               />
+              {/* 样本列表 */}
               <Route 
-                path="sample/tracking" 
+                path="sample/list" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
-                    <SampleTracking />
+                    <SampleList />
                   </Suspense>
                 } 
               />
+
+              {/* Luckysheet 演示页面 */}
               <Route 
-                path="sample/storage" 
+                path="sample/luckysheet-demo" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
-                    <SampleStorage />
+                    <LuckysheetDemo />
+                  </Suspense>
+                } 
+              />
+
+              {/* Univer 演示页面 */}
+              <Route 
+                path="sample/univer-demo" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <UniverDemo />
                   </Suspense>
                 } 
               />
@@ -302,8 +339,7 @@ const AppWithTheme: React.FC = () => {
                 } 
               />
               
-              {/* 兼容旧路由 */}
-              <Route path="samples" element={<Navigate to="/sample/receiving" replace />} />
+              {/* 兼容旧路由：样本管理相关重定向已移除 */}
               <Route path="experiments" element={<Navigate to="/experiment/sequencing" replace />} />
               <Route path="reports" element={<Navigate to="/report/publish" replace />} />
             </Route>

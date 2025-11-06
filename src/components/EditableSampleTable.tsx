@@ -113,7 +113,6 @@ import {
   LockOutlined,
   UnlockOutlined,
   KeyOutlined,
-  ShieldOutlined,
   FireOutlined,
   BugOutlined,
   RobotOutlined,
@@ -410,6 +409,110 @@ const EditableSampleTable: React.FC<EditableSampleTableProps> = ({
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({});
   const [quickAddVisible, setQuickAddVisible] = useState(false);
   const [batchEditVisible, setBatchEditVisible] = useState(false);
+  // 粘贴相关状态
+  const [pasteModalVisible, setPasteModalVisible] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [pastePreview, setPastePreview] = useState<SampleData[]>([]);
+  const [pasteFirstRowHeader, setPasteFirstRowHeader] = useState(true);
+
+  /**
+   * 解析从剪贴板粘贴的文本为样本数据行
+   *
+   * 入参：
+   * - text: 粘贴的纯文本内容，通常为制表符分隔(TSV)的表格
+   * - firstRowHeader: 是否将首行视为表头，用于字段映射
+   * - columns: 当前表格的列配置，用于映射字段顺序和类型
+   *
+   * 出参：
+   * - 返回解析后的 `SampleData[]` 数组，包含必要的id、状态与时间字段
+   */
+  const parsePastedText = (
+    text: string,
+    firstRowHeader: boolean,
+    columns: ColumnConfig[]
+  ): SampleData[] => {
+    if (!text || text.trim().length === 0) return [];
+
+    const lines = text
+      .split(/\r?\n/)
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+    if (lines.length === 0) return [];
+
+    const splitLine = (line: string) => line.split(/\t/);
+    const headerCells = splitLine(lines[0]);
+
+    // 标准化函数：去空格与大小写
+    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+
+    // 构建列映射：根据表头标题匹配列 title，否则按列顺序映射
+    let colMap: { key: string; index: number }[] = [];
+    if (firstRowHeader) {
+      const headerNorm = headerCells.map(normalize);
+      columns.forEach((col, idx) => {
+        const targetIdx = headerNorm.findIndex(h => h === normalize(col.title));
+        if (targetIdx >= 0) {
+          colMap.push({ key: col.key, index: targetIdx });
+        } else {
+          // 未匹配到时，降级为顺序映射
+          if (idx < headerCells.length) {
+            colMap.push({ key: col.key, index: idx });
+          }
+        }
+      });
+    } else {
+      columns.forEach((col, idx) => {
+        colMap.push({ key: col.key, index: idx });
+      });
+    }
+
+    const startIdx = firstRowHeader ? 1 : 0;
+    const now = dayjs().format('YYYY-MM-DD HH:mm:ss');
+    const result: SampleData[] = [];
+
+    for (let i = startIdx; i < lines.length; i++) {
+      const cells = splitLine(lines[i]);
+      const record: SampleData = {
+        id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
+        sampleCode: '',
+        sampleType: '',
+        status: 'pending',
+        createTime: now,
+        updateTime: now,
+      } as SampleData;
+
+      colMap.forEach(({ key, index }) => {
+        const col = columns.find(c => c.key === key);
+        if (!col) return;
+        const raw = index < cells.length ? cells[index] : '';
+        if (raw === undefined) return;
+        switch (col.dataType) {
+          case 'number':
+            const num = Number(raw);
+            (record as any)[key] = isNaN(num) ? undefined : num;
+            break;
+          case 'date':
+            const d = dayjs(raw);
+            (record as any)[key] = d.isValid() ? d.format('YYYY-MM-DD') : raw;
+            break;
+          case 'boolean':
+            (record as any)[key] = /^(true|是|1)$/i.test(raw);
+            break;
+          default:
+            (record as any)[key] = raw;
+        }
+      });
+
+      // 基本必填保护：若无 sampleCode，尝试回退第一个单元格
+      if (!record.sampleCode) {
+        record.sampleCode = splitLine(lines[i])[0] || `SC-${Date.now()}-${i}`;
+      }
+      result.push(record);
+    }
+
+    return result;
+  };
+
   const [templateModalVisible, setTemplateModalVisible] = useState(false);
 
   // 引用
@@ -1100,6 +1203,16 @@ const EditableSampleTable: React.FC<EditableSampleTableProps> = ({
                   >
                     导出
                   </Button>
+                  <Button
+                    icon={<CopyOutlined />}
+                    onClick={() => {
+                      setPasteModalVisible(true);
+                      setPasteText('');
+                      setPastePreview([]);
+                    }}
+                  >
+                    粘贴数据
+                  </Button>
                 </>
               )}
               <Button
@@ -1199,6 +1312,96 @@ const EditableSampleTable: React.FC<EditableSampleTableProps> = ({
           }}
         />
       </Form>
+
+      {/* 粘贴数据模态框 */}
+      <Modal
+        title="从 Excel/CSV 文本粘贴"
+        open={pasteModalVisible}
+        onCancel={() => setPasteModalVisible(false)}
+        onOk={() => {
+          // 将预览数据合并到表格
+          if (pastePreview.length === 0) {
+            message.warning('没有可合并的数据');
+            return;
+          }
+          const merged = [...data, ...pastePreview];
+          setData(merged);
+          if (onChange) {
+            onChange(merged);
+          }
+          setPasteModalVisible(false);
+          setPasteText('');
+          setPastePreview([]);
+          message.success(`已粘贴并新增 ${pastePreview.length} 条记录`);
+        }}
+        okText="合并到表格"
+        width={800}
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Alert
+            type="info"
+            message="支持从 Excel/Google Sheets 复制的表格内容，按行粘贴（TSV/tab 分隔）。"
+            showIcon
+          />
+          <Space align="start" style={{ width: '100%' }}>
+            <div style={{ flex: 1 }}>
+              <TextArea
+                rows={8}
+                placeholder="在此粘贴表格内容（可包含表头）"
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                onPaste={(e) => {
+                  // 直接使用剪贴板内容填充
+                  const text = e.clipboardData?.getData('text/plain');
+                  if (text) {
+                    setPasteText(text);
+                    // 解析并生成预览
+                    const preview = parsePastedText(text, pasteFirstRowHeader, columns);
+                    setPastePreview(preview);
+                  }
+                }}
+              />
+            </div>
+            <div style={{ width: 220 }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Checkbox
+                  checked={pasteFirstRowHeader}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setPasteFirstRowHeader(checked);
+                    if (pasteText) {
+                      const preview = parsePastedText(pasteText, checked, columns);
+                      setPastePreview(preview);
+                    }
+                  }}
+                >
+                  首行为表头
+                </Checkbox>
+                <Button
+                  icon={<SnippetsOutlined />}
+                  onClick={() => {
+                    const preview = parsePastedText(pasteText, pasteFirstRowHeader, columns);
+                    setPastePreview(preview);
+                  }}
+                >
+                  生成预览
+                </Button>
+              </Space>
+            </div>
+          </Space>
+
+          <Divider orientation="left">预览（前 50 行）</Divider>
+          <Table
+            size="small"
+            bordered
+            dataSource={pastePreview.slice(0, 50)}
+            rowKey="id"
+            pagination={false}
+            columns={buildTableColumns()}
+            scroll={{ x: 'max-content', y: 240 }}
+          />
+        </Space>
+      </Modal>
 
       {/* 导入模态框 */}
       <Modal

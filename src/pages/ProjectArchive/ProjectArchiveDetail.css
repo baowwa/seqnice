@@ -1,0 +1,283 @@
+/* 项目档案详情页面样式 */
+.project-archive-detail {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  background-color: #f5f5f5;
+  padding-left: 248px; /* 主菜单宽度(240px) + 间距(8px) */
+  padding-top: 64px; /* 头部高度 */
+  padding-right: 8px;
+  padding-bottom: 8px;
+}
+
+/* 基本信息卡片 */
+.basic-info-card {
+  flex-shrink: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.basic-info-card .content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.basic-info-card .status-overview {
+  display: flex;
+  align-items: center;
+}
+
+/* Tab导航卡片样式 */
+.tab-navigation-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tab-navigation-card .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tab-navigation-card .ant-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-navigation-card .ant-tabs-nav {
+  margin: 0;
+  padding: 0 24px;
+  background-color: #fafafa;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+
+.tab-navigation-card .ant-tabs-tab {
+  padding: 16px 20px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.tab-navigation-card .ant-tabs-content-holder {
+  flex: 1;
+  overflow: hidden;
+}
+
+.tab-navigation-card .ant-tabs-content {
+  height: 100%;
+}
+
+.tab-navigation-card .ant-tabs-tabpane {
+  height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.status-item {
+  margin-bottom: 8px;
+}
+
+.status-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 内容区域样式 */
+.content-body {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* 卡片样式增强 */
+.ant-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8e8e8;
+}
+
+.ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.ant-card-head-title {
+  font-weight: 600;
+  color: #262626;
+}
+
+/* 表格样式 */
+.ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #262626;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* 时间轴样式 */
+.ant-timeline-item-head {
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #e8e8e8;
+}
+
+.ant-timeline-item-content {
+  margin-left: 8px;
+}
+
+/* 进度条样式 */
+.ant-progress-line {
+  margin-bottom: 16px;
+}
+
+/* 标签样式 */
+.ant-tag {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 4px 12px;
+}
+
+/* 列表样式 */
+.ant-list-item {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 0;
+}
+
+.ant-list-item:last-child {
+  border-bottom: none;
+}
+
+/* 头像样式 */
+.ant-avatar {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 按钮样式 */
+.ant-btn-primary {
+  border-radius: 6px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+.ant-btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* 表单样式 */
+.ant-form-item-label > label {
+  font-weight: 600;
+  color: #262626;
+}
+
+.ant-input,
+.ant-select-selector,
+.ant-picker {
+  border-radius: 6px;
+}
+
+.ant-input:focus,
+.ant-select-focused .ant-select-selector,
+.ant-picker:hover,
+.ant-picker-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+/* 模态框样式 */
+.ant-modal {
+  border-radius: 12px;
+}
+
+.ant-modal-header {
+  border-radius: 12px 12px 0 0;
+  background: #fafafa;
+}
+
+.ant-modal-title {
+  font-weight: 600;
+  color: #262626;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .project-archive-detail {
+    padding-left: 208px; /* 调整主菜单宽度 */
+  }
+}
+
+@media (max-width: 768px) {
+  .project-archive-detail {
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 80px;
+  }
+  
+  .basic-info-card,
+  .tab-navigation-card {
+    margin-bottom: 16px;
+  }
+  
+  .tab-navigation-card .ant-tabs-nav {
+    padding: 0 16px;
+  }
+  
+  .tab-navigation-card .ant-tabs-tabpane {
+    padding: 16px;
+  }
+}
+
+/* 滚动条样式 */
+.tab-navigation-card .ant-tabs-tabpane::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tab-navigation-card .ant-tabs-tabpane::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.tab-navigation-card .ant-tabs-tabpane::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.tab-navigation-card .ant-tabs-tabpane::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 动画效果 */
+.nav-item,
+.ant-card,
+.ant-btn {
+  transition: all 0.2s ease;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 特殊样式 */
+.status-overview .ant-tag {
+  margin-bottom: 8px;
+}
+
+.ant-timeline-item-content > div:first-child {
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.ant-timeline-item-content > div:last-child {
+  color: #8c8c8c;
+  font-size: 12px;
+}
