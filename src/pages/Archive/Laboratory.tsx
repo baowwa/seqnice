@@ -397,12 +397,12 @@ const LaboratoryManagement: React.FC = () => {
       render: (equipment: string[]) => (
         <div>
           {equipment.slice(0, 3).map((item, index) => (
-            <Tag key={index} size="small" style={{ marginBottom: 2 }}>
+            <Tag key={index} style={{ marginBottom: 2 }}>
               {item}
             </Tag>
           ))}
           {equipment.length > 3 && (
-            <Tag size="small" style={{ marginBottom: 2 }}>
+            <Tag style={{ marginBottom: 2 }}>
               +{equipment.length - 3}
             </Tag>
           )}
@@ -417,7 +417,7 @@ const LaboratoryManagement: React.FC = () => {
       render: (certification: string[]) => (
         <div>
           {certification.map((cert, index) => (
-            <Tag key={index} color="blue" size="small" style={{ marginBottom: 2 }}>
+            <Tag key={index} color="blue" style={{ marginBottom: 2 }}>
               {cert}
             </Tag>
           ))}

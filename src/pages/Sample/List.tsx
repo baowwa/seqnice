@@ -214,7 +214,8 @@ const SampleList: React.FC = () => {
             onClick={() => {
               // 改为在接收页的“单个录入”标签打开（后续可带参预填）
               const url = `/sample/receiving?mode=single&sampleCode=${encodeURIComponent(record.sampleCode || '')}`;
-              window.open(url, '_blank');
+              // 使用路由跳转在当前页打开
+              navigate(url);
             }}
           >
             编辑
@@ -226,14 +227,14 @@ const SampleList: React.FC = () => {
   ];
 
   /**
-   * 方法：跳转到不同录入模式
-   * params: mode 录入模式(single/scan/table/batch)
-   * return: void
+   * 方法：跳转到不同录入模式（当前页）
+   * 入参：mode 录入模式（single/scan/table/batch）
+   * 出参：void（通过 React Router 在当前页导航）
    */
   const goMode = (mode: 'single' | 'scan' | 'table' | 'batch') => {
-    // 所有模式均在新标签页打开接收页对应标签
+    // 在当前页打开接收页对应标签
     const url = `/sample/receiving?mode=${mode}`;
-    window.open(url, '_blank');
+    navigate(url);
   };
 
   return (

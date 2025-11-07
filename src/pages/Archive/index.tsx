@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAppStore } from '../../store'
-import CustomerManagement from './Customer'
 import SampleTypeManagement from './SampleType'
 import EquipmentManagement from './Equipment'
 import ReagentManagement from './Reagent'
 import LaboratoryManagement from './Laboratory'
 import DepartmentManagement from './Department'
-import ExperimentGroupManagement from './ExperimentGroup'
+/**
+ * 说明：已按需求移除“客户管理”和“实验小组”路由与界面入口
+ */
 
 /**
  * 基础档案管理模块
@@ -22,14 +23,12 @@ const ArchiveManagement: React.FC = () => {
 
   return (
     <Routes>
-      <Route index element={<Navigate to="customer" replace />} />
-      <Route path="customer" element={<CustomerManagement />} />
+      <Route index element={<Navigate to="equipment" replace />} />
       <Route path="sample-type" element={<SampleTypeManagement />} />
       <Route path="equipment" element={<EquipmentManagement />} />
       <Route path="reagent" element={<ReagentManagement />} />
       <Route path="laboratory" element={<LaboratoryManagement />} />
       <Route path="department" element={<DepartmentManagement />} />
-      <Route path="experiment-group" element={<ExperimentGroupManagement />} />
     </Routes>
   )
 }

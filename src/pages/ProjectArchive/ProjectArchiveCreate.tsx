@@ -457,42 +457,7 @@ const ProjectArchiveCreate: React.FC = () => {
           </ConfigProvider>
         </Card>
 
-        {/* Tab导航区域 */}
-        <Card className="tab-content-card">
-          <ConfigProvider componentDisabled={isViewMode}>
-            <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={[
-              {
-                key: 'samples',
-                label: '样本策略',
-                children: renderSampleStrategy()
-              },
-              {
-                key: 'detection',
-                label: '检测要求',
-                children: renderDetectionRequirements()
-              },
-              {
-                key: 'validation',
-                label: '验证标准',
-                children: renderValidationStandards()
-              },
-              {
-                key: 'organizations',
-                label: '参与机构',
-                children: renderOrganizations()
-              },
-              {
-                key: 'documents',
-                label: '项目附件',
-                children: renderDocuments()
-              }
-            ]}
-          />
-          </ConfigProvider>
-        </Card>
+        {/* 已移除底部子Tab及其内容，页面仅保留基本信息 */}
       </Form>
     </div>
   )

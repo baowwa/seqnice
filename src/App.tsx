@@ -36,8 +36,22 @@ const ArchiveManagement = lazy(() => import('./pages/Archive'))
 const ProjectArchive = lazy(() => import('./pages/ProjectArchive'))
 const ProjectArchiveDetail = lazy(() => import('./pages/ProjectArchive/ProjectArchiveDetail'))
 const ProjectArchiveCreate = lazy(() => import('./pages/ProjectArchive/ProjectArchiveCreate'))
+/**
+ * 研究实验方案页面组件（懒加载）
+ * 入参：无
+ * 出参：返回 React 组件，用于展示“内容开发中，敬请期待”占位内容
+ */
+const ResearchExperimentPlan = lazy(() => import('./pages/ProjectArchive/ResearchExperimentPlan'))
 const AnalysisManagement = lazy(() => import('./pages/Analysis'))
-const InspectionProjectLibrary = lazy(() => import('./pages/InspectionProject/Library'))
+// 合作档案占位页面（懒加载）
+const CooperationEnterprise = lazy(() => import('./pages/CooperationArchive/EnterpriseArchive'))
+const CooperationCustomer = lazy(() => import('./pages/CooperationArchive/CustomerCooperationArchive'))
+  const InspectionProjectLibrary = lazy(() => import('./pages/InspectionProject/Library'))
+  const InspectionProjectStandard = lazy(() => import('./pages/InspectionProject/Standard'))
+  const InspectionProjectLibraryCreate = lazy(() => import('./pages/InspectionProject/LibraryCreate'))
+  const InspectionProjectLibraryEdit = lazy(() => import('./pages/InspectionProject/LibraryEdit'))
+  const SOPConfigList = lazy(() => import('./pages/InspectionProject/SOPConfigList.tsx'))
+  const SOPConfigCreate = lazy(() => import('./pages/InspectionProject/SOPConfigCreate.tsx'))
 
 /**
  * 加载中组件
@@ -56,7 +70,7 @@ const LoadingSpinner: React.FC = () => (
 /**
  * 带主题的应用组件
  */
-const AppWithTheme: React.FC = () => {
+  const AppWithTheme: React.FC = () => {
   const { themeConfig } = useTheme()
 
   return (
@@ -95,6 +109,24 @@ const AppWithTheme: React.FC = () => {
                   </Suspense>
                 } 
               />
+
+              {/* 合作档案占位页面路由 */}
+              <Route 
+                path="cooperation-archive/enterprise" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <CooperationEnterprise />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="cooperation-archive/customer" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <CooperationCustomer />
+                  </Suspense>
+                } 
+              />
               
               {/* 项目档案路由 */}
               <Route 
@@ -121,14 +153,68 @@ const AppWithTheme: React.FC = () => {
                   </Suspense>
                 } 
               />
+              {/* 研究实验方案占位页面路由 */}
+              <Route 
+                path="project-archive/research-plan" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    {/*
+                      方法说明：该路由用于注册“研究实验方案”占位页面。
+                      入参：无。
+                      出参：React 元素，渲染懒加载组件。
+                    */}
+                    <ResearchExperimentPlan />
+                  </Suspense>
+                } 
+              />
               
               {/* 检测项目路由按要求移除 */}
               {/* 检验项目管理路由 */}
+              <Route 
+                path="inspection-project/standard" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <InspectionProjectStandard />
+                  </Suspense>
+                } 
+              />
               <Route 
                 path="inspection-project/library" 
                 element={
                   <Suspense fallback={<LoadingSpinner />}>
                     <InspectionProjectLibrary />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="inspection-project/library/create" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <InspectionProjectLibraryCreate />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="inspection-project/library/edit/:code" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <InspectionProjectLibraryEdit />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="inspection-project/sop" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <SOPConfigList />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="inspection-project/sop/create" 
+                element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <SOPConfigCreate />
                   </Suspense>
                 } 
               />

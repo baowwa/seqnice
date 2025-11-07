@@ -57,7 +57,7 @@ interface Department {
 }
 
 /**
- * 科室列表管理页面组件
+ * 实验科室管理页面组件
  * 提供科室信息的增删改查功能，支持层级结构
  */
 const DepartmentManagement: React.FC = () => {
@@ -75,7 +75,7 @@ const DepartmentManagement: React.FC = () => {
     setBreadcrumbs([
       { title: '首页' }, 
       { title: '基础档案' }, 
-      { title: '科室列表' }
+      { title: '实验科室' }
     ])
     loadDepartments()
   }, [setBreadcrumbs])
@@ -488,12 +488,12 @@ const DepartmentManagement: React.FC = () => {
       render: (responsibilities: string[]) => (
         <div>
           {responsibilities.slice(0, 2).map((item, index) => (
-            <Tag key={index} size="small" style={{ marginBottom: 2 }}>
+            <Tag key={index} style={{ marginBottom: 2 }}>
               {item}
             </Tag>
           ))}
           {responsibilities.length > 2 && (
-            <Tag size="small" style={{ marginBottom: 2 }}>
+            <Tag style={{ marginBottom: 2 }}>
               +{responsibilities.length - 2}
             </Tag>
           )}

@@ -79,14 +79,6 @@ const MainLayout: React.FC = () => {
         label: '基础档案',
         children: [
           { 
-            key: 'archive/customer', 
-            label: '客户管理', 
-            onClick: () => {
-              navigate('/archive/customer')
-              if (isMobile) setDrawerVisible(false)
-            }
-          },
-          { 
             key: 'archive/sample-type', 
             label: '样本类型', 
             onClick: () => {
@@ -96,7 +88,7 @@ const MainLayout: React.FC = () => {
           },
           { 
             key: 'archive/equipment', 
-            label: '设备管理', 
+            label: '设备档案', 
             onClick: () => {
               navigate('/archive/equipment')
               if (isMobile) setDrawerVisible(false)
@@ -104,7 +96,7 @@ const MainLayout: React.FC = () => {
           },
           { 
             key: 'archive/reagent', 
-            label: '试剂档案', 
+            label: '物料档案', 
             onClick: () => {
               navigate('/archive/reagent')
               if (isMobile) setDrawerVisible(false)
@@ -120,17 +112,33 @@ const MainLayout: React.FC = () => {
           },
           { 
             key: 'archive/department', 
-            label: '科室列表', 
+            label: '实验科室', 
             onClick: () => {
               navigate('/archive/department')
               if (isMobile) setDrawerVisible(false)
             }
-          },
-          { 
-            key: 'archive/experiment-group', 
-            label: '实验小组', 
+          }
+          
+        ]
+      },
+      {
+        key: 'cooperation-archive',
+        icon: <TeamOutlined />,
+        label: '合作档案',
+        children: [
+          {
+            key: 'cooperation-archive/enterprise',
+            label: '企业档案',
             onClick: () => {
-              navigate('/archive/experiment-group')
+              navigate('/cooperation-archive/enterprise')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          {
+            key: 'cooperation-archive/customer',
+            label: '客户合作档案',
+            onClick: () => {
+              navigate('/cooperation-archive/customer')
               if (isMobile) setDrawerVisible(false)
             }
           }
@@ -139,13 +147,21 @@ const MainLayout: React.FC = () => {
       {
         key: 'project-archive',
         icon: <FolderOutlined />,
-        label: '项目档案',
+        label: '项目管理',
         children: [
           { 
             key: 'project-archive/list', 
             label: '项目档案', 
             onClick: () => {
               navigate('/project-archive')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
+          {
+            key: 'project-archive/research-plan',
+            label: '研究实验方案',
+            onClick: () => {
+              navigate('/project-archive/research-plan')
               if (isMobile) setDrawerVisible(false)
             }
           }
@@ -157,13 +173,30 @@ const MainLayout: React.FC = () => {
       {
         key: 'inspection-project',
         icon: <MedicineBoxOutlined />,
-        label: '检验项目管理',
+        label: '检验项目',
         children: [
+          {
+            key: 'inspection-project/standard',
+            label: '标准检验项目',
+            onClick: () => {
+              navigate('/inspection-project/standard')
+              if (isMobile) setDrawerVisible(false)
+            }
+          },
           {
             key: 'inspection-project/library',
             label: '检验项目库',
             onClick: () => {
               navigate('/inspection-project/library')
+              if (isMobile) setDrawerVisible(false)
+            }
+          }
+          ,
+          {
+            key: 'inspection-project/sop',
+            label: 'SOP配置',
+            onClick: () => {
+              navigate('/inspection-project/sop')
               if (isMobile) setDrawerVisible(false)
             }
           }

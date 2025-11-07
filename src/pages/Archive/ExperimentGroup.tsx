@@ -613,14 +613,13 @@ const ExperimentGroupManagement: React.FC = () => {
               <Tag 
                 key={index} 
                 color={getRoleColor(member.role)} 
-                size="small" 
                 style={{ marginBottom: 2 }}
               >
                 {member.name}({getRoleText(member.role)})
               </Tag>
             ))}
             {members.length > 3 && (
-              <Tag size="small" style={{ marginBottom: 2 }}>
+              <Tag style={{ marginBottom: 2 }}>
                 +{members.length - 3}
               </Tag>
             )}
@@ -636,12 +635,12 @@ const ExperimentGroupManagement: React.FC = () => {
       render: (specialties: string[]) => (
         <div>
           {specialties.slice(0, 2).map((item, index) => (
-            <Tag key={index} size="small" style={{ marginBottom: 2 }}>
+            <Tag key={index} style={{ marginBottom: 2 }}>
               {item}
             </Tag>
           ))}
           {specialties.length > 2 && (
-            <Tag size="small" style={{ marginBottom: 2 }}>
+            <Tag style={{ marginBottom: 2 }}>
               +{specialties.length - 2}
             </Tag>
           )}

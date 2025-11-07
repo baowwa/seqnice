@@ -8,7 +8,6 @@ import {
   Form,
   Input,
   Select,
-  DatePicker,
   Tag,
   Popconfirm,
   message,
@@ -16,50 +15,51 @@ import {
   Col,
   Typography,
   Tooltip,
-  InputNumber
+  Radio
 } from 'antd'
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  SearchOutlined,
-  ExportOutlined,
-  WarningOutlined
+  SearchOutlined
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useAppStore } from '../../store'
-import dayjs from 'dayjs'
+// 移除不必要的日期库
 
 const { Option } = Select
 const { TextArea } = Input
 const { Title } = Typography
 
 /**
- * 试剂信息接口
+ * 物料档案数据结构（与截图字段一致）
  */
 interface Reagent {
+  /** 主键ID */
   id: string
-  name: string
-  code: string
-  brand: string
-  specification: string
-  lotNumber: string
-  expiryDate: string
-  storageCondition: string
-  quantity: number
-  unit: string
-  price: number
-  supplier: string
-  category: string
-  status: 'normal' | 'expired' | 'low_stock' | 'out_of_stock'
-  description?: string
+  /** 物料编码 */
+  reagent_code: string
+  /** 物料名称 */
+  reagent_name: string
+  /** 品牌（可选） */
+  brand_name?: string
+  /** 规格（可选） */
+  spec?: string
+  /** 批次（可选） */
+  lot_no?: string
+  /** 状态：0-停用，1-启用（必填） */
+  enable_status: 0 | 1
+  /** 创建时间 */
   createdAt: string
+  /** 更新时间 */
   updatedAt: string
+  /** 描述（可选） */
+  description?: string
 }
 
 /**
- * 试剂档案管理页面组件
- * 提供试剂信息的增删改查功能，包括库存管理和过期提醒
+ * 物料档案管理页面组件
+ * 提供试剂/物料信息的增删改查功能，包括库存管理和过期提醒
  */
 const ReagentManagement: React.FC = () => {
   const { setBreadcrumbs } = useAppStore()
@@ -76,15 +76,16 @@ const ReagentManagement: React.FC = () => {
     setBreadcrumbs([
       { title: '首页' }, 
       { title: '基础档案' }, 
-      { title: '试剂档案' }
+      { title: '物料档案' }
     ])
     loadReagents()
   }, [setBreadcrumbs])
 
   /**
-   * 加载试剂列表数据
+   * 加载物料列表数据
+   * @returns void 无返回值
    */
-  const loadReagents = async () => {
+  const loadReagents = async (): Promise<void> => {
     setLoading(true)
     try {
       // 模拟API调用
@@ -93,85 +94,42 @@ const ReagentManagement: React.FC = () => {
       const mockReagents: Reagent[] = [
         {
           id: '1',
-          name: 'Taq DNA聚合酶',
-          code: 'REA001',
-          brand: 'Thermo Fisher',
-          specification: '500U',
-          lotNumber: 'TF20240301',
-          expiryDate: '2024-12-31',
-          storageCondition: '-20°C',
-          quantity: 25,
-          unit: '支',
-          price: 580.00,
-          supplier: '赛默飞世尔科技',
-          category: '酶类试剂',
-          status: 'normal',
-          description: '高保真DNA聚合酶，适用于PCR扩增',
+          reagent_code: 'REA001',
+          reagent_name: 'Taq DNA聚合酶',
+          brand_name: 'Thermo Fisher',
+          spec: '500U',
+          lot_no: 'TF20240301',
+          enable_status: 1,
           createdAt: '2024-01-15T10:00:00Z',
           updatedAt: '2024-02-20T14:30:00Z'
         },
         {
           id: '2',
-          name: 'dNTP混合液',
-          code: 'REA002',
-          brand: 'NEB',
-          specification: '10mM',
-          lotNumber: 'NEB20240215',
-          expiryDate: '2024-08-15',
-          storageCondition: '-20°C',
-          quantity: 5,
-          unit: '管',
-          price: 320.00,
-          supplier: '新英格兰生物实验室',
-          category: '核酸试剂',
-          status: 'low_stock',
-          description: '四种dNTP等摩尔混合液',
+          reagent_code: 'REA002',
+          reagent_name: 'dNTP混合液',
+          brand_name: 'NEB',
+          spec: '10mM',
+          lot_no: 'NEB20240215',
+          enable_status: 1,
           createdAt: '2024-02-01T09:15:00Z',
           updatedAt: '2024-02-25T16:45:00Z'
         },
         {
           id: '3',
-          name: 'DNA Marker',
-          code: 'REA003',
-          brand: 'Takara',
-          specification: '100bp-10kb',
-          lotNumber: 'TK20231201',
-          expiryDate: '2024-06-30',
-          storageCondition: '-20°C',
-          quantity: 0,
-          unit: '支',
-          price: 180.00,
-          supplier: '宝生物工程',
-          category: '分子标准',
-          status: 'out_of_stock',
-          description: 'DNA分子量标准，100bp-10kb',
+          reagent_code: 'REA003',
+          reagent_name: 'DNA Marker',
+          brand_name: 'Takara',
+          spec: '100bp-10kb',
+          lot_no: 'TK20231201',
+          enable_status: 0,
           createdAt: '2023-12-05T11:20:00Z',
           updatedAt: '2024-02-28T10:15:00Z'
-        },
-        {
-          id: '4',
-          name: 'SYBR Green染料',
-          code: 'REA004',
-          brand: 'Applied Biosystems',
-          specification: '1ml',
-          lotNumber: 'AB20240101',
-          expiryDate: '2024-04-30',
-          storageCondition: '4°C避光',
-          quantity: 12,
-          unit: '瓶',
-          price: 450.00,
-          supplier: '应用生物系统',
-          category: '荧光染料',
-          status: 'expired',
-          description: 'qPCR荧光染料，高灵敏度',
-          createdAt: '2024-01-10T08:30:00Z',
-          updatedAt: '2024-03-01T12:00:00Z'
         }
       ]
       
       setReagents(mockReagents)
     } catch (error) {
-      message.error('获取试剂列表失败')
+      message.error('获取物料列表失败')
     } finally {
       setLoading(false)
     }
@@ -179,16 +137,17 @@ const ReagentManagement: React.FC = () => {
 
   /**
    * 打开新增/编辑模态框
+   * @param reagent 选填：编辑的物料对象
    */
   const openModal = (reagent?: Reagent) => {
     setEditingReagent(reagent || null)
     if (reagent) {
       form.setFieldsValue({
-        ...reagent,
-        expiryDate: dayjs(reagent.expiryDate)
+        ...reagent
       })
     } else {
       form.resetFields()
+      form.setFieldsValue({ enable_status: 1 })
     }
     setModalVisible(true)
   }
@@ -203,40 +162,38 @@ const ReagentManagement: React.FC = () => {
   }
 
   /**
-   * 保存试剂信息
+   * 保存物料信息
+   * @param values 表单值
+   * @returns Promise<void>
    */
-  const saveReagent = async (values: any) => {
+  const saveReagent = async (values: any): Promise<void> => {
     try {
       setLoading(true)
       
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      const reagentData = {
-        ...values,
-        expiryDate: values.expiryDate.format('YYYY-MM-DD'),
-        status: getReagentStatus(values.quantity, values.expiryDate.format('YYYY-MM-DD'))
+      const reagentData: Reagent = {
+        id: editingReagent?.id ?? Date.now().toString(),
+        reagent_code: values.reagent_code,
+        reagent_name: values.reagent_name,
+        brand_name: values.brand_name,
+        spec: values.spec,
+        lot_no: values.lot_no,
+        enable_status: Number(values.enable_status) as 0 | 1,
+        description: values.description,
+        createdAt: editingReagent?.createdAt ?? new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }
 
       if (editingReagent) {
         // 更新试剂
-        const updatedReagent = {
-          ...editingReagent,
-          ...reagentData,
-          updatedAt: new Date().toISOString()
-        }
-        setReagents(reagents.map(r => r.id === editingReagent.id ? updatedReagent : r))
-        message.success('试剂信息更新成功')
+        setReagents(reagents.map(r => r.id === editingReagent.id ? reagentData : r))
+        message.success('物料信息更新成功')
       } else {
-        // 新增试剂
-        const newReagent: Reagent = {
-          id: Date.now().toString(),
-          ...reagentData,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-        setReagents([...reagents, newReagent])
-        message.success('试剂添加成功')
+        // 新增物料
+        setReagents([...reagents, reagentData])
+        message.success('物料添加成功')
       }
 
       closeModal()
@@ -267,162 +224,51 @@ const ReagentManagement: React.FC = () => {
   }
 
   /**
-   * 根据库存和过期时间判断试剂状态
+   * 获取启用状态的标签颜色
+   * @param status 启用状态（0-停用，1-启用）
+   * @returns 颜色字符串
    */
-  const getReagentStatus = (quantity: number, expiryDate: string): Reagent['status'] => {
-    if (quantity === 0) return 'out_of_stock'
-    if (quantity <= 10) return 'low_stock'
-    if (dayjs(expiryDate).isBefore(dayjs(), 'day')) return 'expired'
-    return 'normal'
+  const getStatusColor = (status: Reagent['enable_status']): string => {
+    return status === 1 ? 'green' : 'red'
   }
 
   /**
-   * 获取状态标签颜色
+   * 获取启用状态的展示文本
+   * @param status 启用状态（0-停用，1-启用）
+   * @returns 状态中文文本
    */
-  const getStatusColor = (status: Reagent['status']) => {
-    const colorMap = {
-      normal: 'green',
-      expired: 'red',
-      low_stock: 'orange',
-      out_of_stock: 'volcano'
-    }
-    return colorMap[status]
+  const getStatusText = (status: Reagent['enable_status']): string => {
+    return status === 1 ? '启用' : '停用'
   }
 
   /**
-   * 获取状态文本
-   */
-  const getStatusText = (status: Reagent['status']) => {
-    const textMap = {
-      normal: '正常',
-      expired: '已过期',
-      low_stock: '库存不足',
-      out_of_stock: '缺货'
-    }
-    return textMap[status]
-  }
-
-  /**
-   * 过滤试剂列表
+   * 过滤物料列表
    */
   const filteredReagents = reagents.filter(reagent => {
-    const matchesSearch = !searchText || 
-      reagent.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      reagent.code.toLowerCase().includes(searchText.toLowerCase()) ||
-      reagent.brand.toLowerCase().includes(searchText.toLowerCase()) ||
-      reagent.supplier.toLowerCase().includes(searchText.toLowerCase())
-    
-    const matchesStatus = !statusFilter || reagent.status === statusFilter
-    const matchesCategory = !categoryFilter || reagent.category === categoryFilter
-    
-    return matchesSearch && matchesStatus && matchesCategory
+    const text = searchText.trim().toLowerCase()
+    const matchesSearch = !text ||
+      reagent.reagent_name.toLowerCase().includes(text) ||
+      reagent.reagent_code.toLowerCase().includes(text) ||
+      (reagent.brand_name || '').toLowerCase().includes(text)
+    return matchesSearch
   })
 
   /**
-   * 表格列定义
+   * 表格列定义（与截图一致）
    */
   const columns: ColumnsType<Reagent> = [
-    {
-      title: '试剂编码',
-      dataIndex: 'code',
-      key: 'code',
-      width: 100,
-      fixed: 'left'
-    },
-    {
-      title: '试剂名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 150,
-      fixed: 'left'
-    },
-    {
-      title: '品牌',
-      dataIndex: 'brand',
-      key: 'brand',
-      width: 120
-    },
-    {
-      title: '规格',
-      dataIndex: 'specification',
-      key: 'specification',
-      width: 100
-    },
-    {
-      title: '批号',
-      dataIndex: 'lotNumber',
-      key: 'lotNumber',
-      width: 120
-    },
-    {
-      title: '有效期',
-      dataIndex: 'expiryDate',
-      key: 'expiryDate',
-      width: 110,
-      render: (date: string, record: Reagent) => {
-        const isExpired = dayjs(date).isBefore(dayjs(), 'day')
-        const isExpiringSoon = dayjs(date).diff(dayjs(), 'day') <= 30 && !isExpired
-        
-        return (
-          <span style={{ 
-            color: isExpired ? '#ff4d4f' : isExpiringSoon ? '#fa8c16' : undefined 
-          }}>
-            {dayjs(date).format('YYYY-MM-DD')}
-            {(isExpired || isExpiringSoon) && (
-              <WarningOutlined style={{ marginLeft: 4, color: '#fa8c16' }} />
-            )}
-          </span>
-        )
-      }
-    },
-    {
-      title: '存储条件',
-      dataIndex: 'storageCondition',
-      key: 'storageCondition',
-      width: 100
-    },
-    {
-      title: '库存',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      width: 80,
-      render: (quantity: number, record: Reagent) => (
-        <span style={{ 
-          color: quantity === 0 ? '#ff4d4f' : quantity <= 10 ? '#fa8c16' : undefined 
-        }}>
-          {quantity} {record.unit}
-        </span>
-      )
-    },
-    {
-      title: '单价',
-      dataIndex: 'price',
-      key: 'price',
-      width: 80,
-      render: (price: number) => `¥${price.toFixed(2)}`
-    },
-    {
-      title: '供应商',
-      dataIndex: 'supplier',
-      key: 'supplier',
-      width: 120,
-      ellipsis: true
-    },
-    {
-      title: '分类',
-      dataIndex: 'category',
-      key: 'category',
-      width: 100
-    },
+    { title: '物料编码', dataIndex: 'reagent_code', key: 'reagent_code', width: 140, fixed: 'left' },
+    { title: '物料名称', dataIndex: 'reagent_name', key: 'reagent_name', width: 180, fixed: 'left' },
+    { title: '品牌', dataIndex: 'brand_name', key: 'brand_name', width: 140 },
+    { title: '规格', dataIndex: 'spec', key: 'spec', width: 120 },
+    { title: '批次', dataIndex: 'lot_no', key: 'lot_no', width: 140 },
     {
       title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 80,
-      render: (status: Reagent['status']) => (
-        <Tag color={getStatusColor(status)}>
-          {getStatusText(status)}
-        </Tag>
+      dataIndex: 'enable_status',
+      key: 'enable_status',
+      width: 100,
+      render: (status: Reagent['enable_status']) => (
+        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
       )
     },
     {
@@ -433,26 +279,11 @@ const ReagentManagement: React.FC = () => {
       render: (_: any, record: Reagent) => (
         <Space>
           <Tooltip title="编辑">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => openModal(record)}
-              size="small"
-            />
+            <Button type="text" icon={<EditOutlined />} onClick={() => openModal(record)} size="small" />
           </Tooltip>
-          <Popconfirm
-            title="确定要删除这个试剂吗？"
-            onConfirm={() => deleteReagent(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
+          <Popconfirm title="确定要删除该物料吗？" onConfirm={() => deleteReagent(record.id)} okText="确定" cancelText="取消">
             <Tooltip title="删除">
-              <Button 
-                type="text" 
-                danger 
-                icon={<DeleteOutlined />}
-                size="small"
-              />
+              <Button type="text" danger icon={<DeleteOutlined />} size="small" />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -463,7 +294,7 @@ const ReagentManagement: React.FC = () => {
   return (
     <div>
       <Title level={3} style={{ marginBottom: 24 }}>
-        试剂档案
+        物料档案
       </Title>
 
       <Card className="content-card">
@@ -477,37 +308,8 @@ const ReagentManagement: React.FC = () => {
               onChange={(e) => setSearchText(e.target.value)}
               style={{ width: 280 }}
             />
-            <Select
-              placeholder="试剂分类"
-              value={categoryFilter}
-              onChange={setCategoryFilter}
-              style={{ width: 120 }}
-              allowClear
-            >
-              <Option value="酶类试剂">酶类试剂</Option>
-              <Option value="核酸试剂">核酸试剂</Option>
-              <Option value="分子标准">分子标准</Option>
-              <Option value="荧光染料">荧光染料</Option>
-              <Option value="缓冲液">缓冲液</Option>
-              <Option value="其他">其他</Option>
-            </Select>
-            <Select
-              placeholder="状态"
-              value={statusFilter}
-              onChange={setStatusFilter}
-              style={{ width: 100 }}
-              allowClear
-            >
-              <Option value="normal">正常</Option>
-              <Option value="expired">已过期</Option>
-              <Option value="low_stock">库存不足</Option>
-              <Option value="out_of_stock">缺货</Option>
-            </Select>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
-              新增试剂
-            </Button>
-            <Button icon={<ExportOutlined />}>
-              导出
+              新增物料
             </Button>
           </Space>
         </div>
@@ -518,7 +320,7 @@ const ReagentManagement: React.FC = () => {
           dataSource={filteredReagents}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 1500 }}
+          scroll={{ x: 900 }}
           pagination={{
             total: filteredReagents.length,
             pageSize: 10,
@@ -529,163 +331,79 @@ const ReagentManagement: React.FC = () => {
         />
       </Card>
 
-      {/* 新增/编辑试剂模态框 */}
+      {/* 新增/编辑物料模态框 */}
       <Modal
-        title={editingReagent ? '编辑试剂' : '新增试剂'}
+        title={editingReagent ? '编辑物料' : '新增物料'}
         open={modalVisible}
         onCancel={closeModal}
         footer={null}
-        width={800}
+        width={760}
       >
         <Form
           form={form}
-          layout="vertical"
+          layout="horizontal"
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 16 }}
           onFinish={saveReagent}
         >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="code"
-                label="试剂编码"
-                rules={[{ required: true, message: '请输入试剂编码' }]}
-              >
-                <Input placeholder="请输入试剂编码" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="name"
-                label="试剂名称"
-                rules={[{ required: true, message: '请输入试剂名称' }]}
-              >
-                <Input placeholder="请输入试剂名称" />
-              </Form.Item>
-            </Col>
-          </Row>
+          
+          <Form.Item
+            name="reagent_code"
+            label="物料编码"
+            rules={[{ required: true, message: '请输入物料编码' }]}
+          >
+            <Input placeholder="请输入物料编码" />
+          </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="brand"
-                label="品牌"
-                rules={[{ required: true, message: '请输入品牌' }]}
-              >
-                <Input placeholder="请输入品牌" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="specification"
-                label="规格"
-                rules={[{ required: true, message: '请输入规格' }]}
-              >
-                <Input placeholder="请输入规格" />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            name="reagent_name"
+            label="物料名称"
+            rules={[{ required: true, message: '请输入物料名称' }]}
+          >
+            <Input placeholder="请输入物料名称" />
+          </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="lotNumber"
-                label="批号"
-                rules={[{ required: true, message: '请输入批号' }]}
-              >
-                <Input placeholder="请输入批号" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="expiryDate"
-                label="有效期"
-                rules={[{ required: true, message: '请选择有效期' }]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            name="brand_name"
+            label="品牌"
+          >
+            <Input placeholder="请输入品牌" />
+          </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="storageCondition"
-                label="存储条件"
-                rules={[{ required: true, message: '请输入存储条件' }]}
-              >
-                <Input placeholder="如：-20°C、4°C避光等" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="quantity"
-                label="库存数量"
-                rules={[{ required: true, message: '请输入库存数量' }]}
-              >
-                <InputNumber min={0} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={4}>
-              <Form.Item
-                name="unit"
-                label="单位"
-                rules={[{ required: true, message: '请输入单位' }]}
-              >
-                <Select placeholder="单位">
-                  <Option value="支">支</Option>
-                  <Option value="管">管</Option>
-                  <Option value="瓶">瓶</Option>
-                  <Option value="盒">盒</Option>
-                  <Option value="ml">ml</Option>
-                  <Option value="μl">μl</Option>
-                  <Option value="g">g</Option>
-                  <Option value="mg">mg</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            name="spec"
+            label="规格"
+          >
+            <Input placeholder="请输入规格" />
+          </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item
-                name="price"
-                label="单价（元）"
-                rules={[{ required: true, message: '请输入单价' }]}
-              >
-                <InputNumber min={0} precision={2} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="supplier"
-                label="供应商"
-                rules={[{ required: true, message: '请输入供应商' }]}
-              >
-                <Input placeholder="请输入供应商" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item
-                name="category"
-                label="试剂分类"
-                rules={[{ required: true, message: '请选择试剂分类' }]}
-              >
-                <Select placeholder="请选择试剂分类">
-                  <Option value="酶类试剂">酶类试剂</Option>
-                  <Option value="核酸试剂">核酸试剂</Option>
-                  <Option value="分子标准">分子标准</Option>
-                  <Option value="荧光染料">荧光染料</Option>
-                  <Option value="缓冲液">缓冲液</Option>
-                  <Option value="其他">其他</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+          <Form.Item
+            name="lot_no"
+            label="批次"
+          >
+            <Input placeholder="请输入批次（可选）" />
+          </Form.Item>
+
+          <Form.Item
+            name="enable_status"
+            label="状态"
+            rules={[{ required: true, message: '请选择状态' }]}
+          >
+            <Radio.Group>
+              <Radio value={1}>启用</Radio>
+              <Radio value={0}>停用</Radio>
+            </Radio.Group>
+          </Form.Item>
+
+          
+
+          
 
           <Form.Item
             name="description"
             label="描述"
           >
-            <TextArea rows={3} placeholder="请输入试剂描述信息" />
+            <TextArea rows={3} placeholder="请输入描述信息（可选）" />
           </Form.Item>
 
           <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>

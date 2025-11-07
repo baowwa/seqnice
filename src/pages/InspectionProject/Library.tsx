@@ -1,21 +1,18 @@
-import React, { useMemo, useState } from 'react'
-import { Button, Card, Drawer, Form, Input, Select, Space, Table, Tag, message } from 'antd'
+import React, { useMemo, useState, useEffect } from 'react'
+import { Button, Card, Form, Input, Select, Space, Table, Tag, message } from 'antd'
+import { useNavigate } from 'react-router-dom'
 
 /**
- * 检验项目库页面
- * 职责：提供检验项目的基础维护能力（列表、新增、编辑、删除）。
- * 字段覆盖截图中的“基本信息”表：
- * - 检测项目编码（系统自动生成，租户内唯一）
- * - 检测项目名称（必填）
- * - 检测项目类型（字典项：正式/自定义）
- * - 标准检测项目（单选，存标准项目code）
- * - 检测项目描述（选填）
- * - 方法学（单选，存方法学编码）
- * - 检验科室（从科室选择，存科室id）
- * - 状态（是否启用：0否，1是，默认1）
- * - 组织（系统默认根据租组织赋值，此示例用常量模拟）
+ * 页面组件：检验项目库（Test + Assay 唯一）
+ * 职责：
+ * - 提供检验项目的列表、新增、编辑、删除能力；
+ * - 增强表单为多页签，覆盖：基础信息、方法学与设备、样本要求、SOP、质控与性能、生信应用、报告模板；
+ * - 保持启用状态前端使用 Switch(boolean)，提交时映射为 tinyint(2) 的 0/1；
+ * 入参：无
+ * 出参：React 组件（JSX.Element）
  */
 const InspectionProjectLibrary: React.FC = () => {
+  const navigate = useNavigate()
   /**
    * 组织ID常量（示例）
    */
@@ -65,7 +62,67 @@ const InspectionProjectLibrary: React.FC = () => {
   ]), [])
 
   /**
-   * 检验项目数据模型
+   * 类型：样本要求
+   * 字段：类型、容器、体积、抗凝剂、运输温度、运输时限、稳定性、拒收标准
+   */
+  interface SampleRequirement {
+    sampleType?: string
+    containerType?: string
+    requiredVolume?: number
+    anticoagulant?: string
+    transportTemp?: string
+    transportMaxHours?: number
+    stabilityHours?: number
+    rejectCriteria?: string
+  }
+
+  /**
+   * 类型：SOP 配置
+   * 字段：sopId、sopUrl、关键步骤摘要
+   */
+  interface SopConfig {
+    sopId?: number
+    sopUrl?: string
+    sopStepSummary?: string
+  }
+
+  /**
+   * 类型：质控与性能
+   * 字段：质控频次、检出限、定量限、线性区间、批内CV
+   */
+  interface QualityPerformance {
+    qcFrequency?: string
+    LoD?: number
+    LoQ?: number
+    linearityMin?: number
+    linearityMax?: number
+    cvWithin?: number
+  }
+
+  /**
+   * 类型：生信应用配置
+   * 字段：应用ID、流水线ID、输入映射、参数JSON、产物说明
+   */
+  interface BioinformaticsConfig {
+    bioAppId?: number
+    pipelineId?: number
+    inputMapping?: string
+    pipelineParams?: string
+    outputArtifacts?: string
+  }
+
+  /**
+   * 类型：报告模板配置
+   * 字段：模板ID、版本、变量映射说明
+   */
+  interface ReportTemplateConfig {
+    reportTemplateId?: number
+    reportTemplateVersion?: string
+    variablesMapping?: string
+  }
+
+  /**
+   * 列表数据模型：检验项目（存储形态）
    */
   interface InspectionProject {
     /** 检测项目编码（系统自动生成） */
@@ -86,40 +143,85 @@ const InspectionProjectLibrary: React.FC = () => {
     status: number
     /** 组织ID */
     organizationId: number
+    /** 样本要求 */
+    sample?: SampleRequirement
+    /** SOP 配置 */
+    sop?: SopConfig
+    /** 质控与性能 */
+    qc?: QualityPerformance
+    /** 是否需要生信：0/1 */
+    requiresBioinformatics?: number
+    /** 生信应用配置 */
+    bio?: BioinformaticsConfig
+    /** 报告模板配置 */
+    report?: ReportTemplateConfig
+  }
+
+  /**
+   * 表单值类型（前端交互形态）：布尔开关 + 嵌套对象
+   * 说明：status/requiresBioinformatics 使用 boolean；提交时转换为 0/1。
+   */
+  interface InspectionProjectFormValues {
+    code: string
+    name: string
+    type?: number
+    standardProjectCode?: string
+    description?: string
+    methodologyCode?: string
+    departmentId?: number
+    status: boolean
+    organizationId: number
+    sample?: SampleRequirement
+    sop?: SopConfig
+    qc?: QualityPerformance
+    requiresBioinformatics?: boolean
+    bio?: BioinformaticsConfig
+    report?: ReportTemplateConfig
   }
 
   /**
    * 本地项目列表状态
    */
-  const [projects, setProjects] = useState<InspectionProject[]>([
-    {
-      code: 'IPJ-000001',
-      name: '结核分枝杆菌检测',
-      type: 1,
-      standardProjectCode: 'STD_MTB',
-      description: '结核分枝杆菌分子检测，联合多靶标判读',
-      methodologyCode: 'SEQ',
-      departmentId: 2002,
-      status: 1,
-      organizationId: defaultOrgId,
-    },
-    {
-      code: 'IPJ-000002',
-      name: 'HIV抗体检测',
-      type: 1,
-      standardProjectCode: 'STD_HIV',
-      description: 'HIV抗体酶联法筛查',
-      methodologyCode: 'QPCR',
-      departmentId: 2003,
-      status: 1,
-      organizationId: defaultOrgId,
-    },
-  ])
+  const [projects, setProjects] = useState<InspectionProject[]>(() => {
+    const cached = localStorage.getItem('inspectionProjects')
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached)
+        if (Array.isArray(parsed)) return parsed
+      } catch {}
+    }
+    return [
+      {
+        code: 'IPJ-000001',
+        name: '结核分枝杆菌检测',
+        type: 1,
+        standardProjectCode: 'STD_MTB',
+        description: '结核分枝杆菌分子检测，联合多靶标判读',
+        methodologyCode: 'SEQ',
+        departmentId: 2002,
+        status: 1,
+        organizationId: defaultOrgId,
+      },
+      {
+        code: 'IPJ-000002',
+        name: 'HIV抗体检测',
+        type: 1,
+        standardProjectCode: 'STD_HIV',
+        description: 'HIV抗体酶联法筛查',
+        methodologyCode: 'QPCR',
+        departmentId: 2003,
+        status: 1,
+        organizationId: defaultOrgId,
+      },
+    ]
+  })
 
-  /** 表单显示与编辑态 */
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [editing, setEditing] = useState<InspectionProject | null>(null)
-  const [form] = Form.useForm<InspectionProject>()
+  // 持久化到 localStorage，便于新增页面返回后列表展示
+  useEffect(() => {
+    localStorage.setItem('inspectionProjects', JSON.stringify(projects))
+  }, [projects])
+
+  /** 编辑改为路由跳转，不再使用抽屉 */
 
   /**
    * 生成唯一编码
@@ -133,17 +235,11 @@ const InspectionProjectLibrary: React.FC = () => {
 
   /**
    * 新增项目
-   * @returns void
+   * 入参：无
+   * 出参：void（跳转到独立的新建页面）
    */
   const handleAdd = (): void => {
-    setEditing(null)
-    form.resetFields()
-    form.setFieldsValue({
-      code: generateCode(),
-      status: 1,
-      organizationId: defaultOrgId,
-    })
-    setDrawerOpen(true)
+    navigate('/inspection-project/library/create')
   }
 
   /**
@@ -151,16 +247,24 @@ const InspectionProjectLibrary: React.FC = () => {
    * @param record 选中的检验项目记录
    * @returns void
    */
+  /**
+   * 方法：编辑项目
+   * @param record 检验项目记录
+   * @returns void（打开抽屉并回填表单）
+   */
   const handleEdit = (record: InspectionProject): void => {
-    setEditing(record)
-    form.setFieldsValue(record)
-    setDrawerOpen(true)
+    navigate(`/inspection-project/library/edit/${record.code}`)
   }
 
   /**
    * 删除项目
    * @param code 待删除项目的编码
    * @returns void
+   */
+  /**
+   * 方法：删除项目
+   * @param code 检验项目编码
+   * @returns void（删除并提示）
    */
   const handleDelete = (code: string): void => {
     setProjects(prev => prev.filter(p => p.code !== code))
@@ -171,30 +275,27 @@ const InspectionProjectLibrary: React.FC = () => {
    * 保存项目（新增或编辑）
    * @returns Promise<void> 保存完成后关闭抽屉并提示
    */
-  const handleSave = async (): Promise<void> => {
-    const values = await form.validateFields()
-    if (editing) {
-      setProjects(prev => prev.map(p => p.code === editing.code ? { ...editing, ...values } : p))
-      message.success('已更新项目')
-    } else {
-      setProjects(prev => [{ ...values }, ...prev])
-      message.success('已新增项目')
-    }
-    setDrawerOpen(false)
-  }
+  /**
+   * 方法：保存项目（新增或编辑）
+   * 入参：无
+   * 出参：Promise<void>（保存成功后关闭抽屉）
+   */
+  // 列表页不再负责保存；保存逻辑由编辑页面承担
 
   /**
    * 关闭抽屉并重置表单
    * @returns void
    */
-  const handleClose = (): void => {
-    setDrawerOpen(false)
-    setEditing(null)
-    form.resetFields()
-  }
+  // 抽屉已移除，无需关闭与重置
 
   /**
    * 将字典值转中文标签
+   * @param options 选项列表
+   * @param value 当前值
+   * @returns 中文标签或原始值
+   */
+  /**
+   * 方法：字典值转中文标签
    * @param options 选项列表
    * @param value 当前值
    * @returns 中文标签或原始值
@@ -204,6 +305,13 @@ const InspectionProjectLibrary: React.FC = () => {
     return found ? found.label : String(value ?? '')
   }
 
+  /**
+   * 方法：方法学变更提示
+   * @param v 当前方法学编码
+   * @returns void（提示联动复核）
+   */
+  // 列表页不处理方法学交互
+
   const columns = [
     { title: '检测项目编码', dataIndex: 'code', key: 'code', width: 160 },
     { title: '检测项目名称', dataIndex: 'name', key: 'name', width: 200 },
@@ -211,7 +319,9 @@ const InspectionProjectLibrary: React.FC = () => {
     { title: '标准检测项目', dataIndex: 'standardProjectCode', key: 'standardProjectCode', width: 180, render: (v: string) => getLabel(standardProjectOptions, v) },
     { title: '方法学', dataIndex: 'methodologyCode', key: 'methodologyCode', width: 120, render: (v: string) => getLabel(methodologyOptions, v) },
     { title: '检验科室', dataIndex: 'departmentId', key: 'departmentId', width: 140, render: (v: number) => getLabel(departmentOptions, v) },
+    { title: '样本类型', dataIndex: ['sample','sampleType'], key: 'sampleType', width: 120 },
     { title: '状态', dataIndex: 'status', key: 'status', width: 100, render: (v: number) => v === 1 ? <Tag color="green">启用</Tag> : <Tag color="red">停用</Tag> },
+    { title: '生信', dataIndex: 'requiresBioinformatics', key: 'requiresBioinformatics', width: 90, render: (v: number | undefined) => (v === 1 ? <Tag color="blue">需要</Tag> : <Tag>否</Tag>) },
     { title: '组织', dataIndex: 'organizationId', key: 'organizationId', width: 100 },
     {
       title: '操作', key: 'action', fixed: 'right' as const, width: 160,
@@ -246,57 +356,7 @@ const InspectionProjectLibrary: React.FC = () => {
         />
       </div>
 
-      <Drawer
-        title={editing ? '编辑检验项目' : '新增检验项目'}
-        width={520}
-        open={drawerOpen}
-        onClose={handleClose}
-        destroyOnClose
-        footer={(
-          <Space style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={handleClose}>取消</Button>
-            <Button type="primary" onClick={handleSave}>保存</Button>
-          </Space>
-        )}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item label="检测项目编码" name="code">
-            <Input disabled />
-          </Form.Item>
-
-          <Form.Item label="检测项目名称" name="name" rules={[{ required: true, message: '请输入检测项目名称' }]}>
-            <Input maxLength={100} placeholder="请输入项目名称" />
-          </Form.Item>
-
-          <Form.Item label="检测项目类型" name="type">
-            <Select options={typeOptions} allowClear placeholder="请选择类型" />
-          </Form.Item>
-
-          <Form.Item label="标准检测项目" name="standardProjectCode">
-            <Select options={standardProjectOptions} allowClear placeholder="请选择标准项目" />
-          </Form.Item>
-
-          <Form.Item label="检测项目描述" name="description">
-            <Input.TextArea rows={3} maxLength={500} placeholder="可选，填写项目描述" />
-          </Form.Item>
-
-          <Form.Item label="方法学" name="methodologyCode">
-            <Select options={methodologyOptions} allowClear placeholder="请选择方法学" />
-          </Form.Item>
-
-          <Form.Item label="检验科室" name="departmentId">
-            <Select options={departmentOptions} allowClear placeholder="请选择科室" />
-          </Form.Item>
-
-          <Form.Item label="状态" name="status" initialValue={1}>
-            <Select options={statusOptions} />
-          </Form.Item>
-
-          <Form.Item label="组织" name="organizationId">
-            <Input disabled />
-          </Form.Item>
-        </Form>
-      </Drawer>
+      {/** 抽屉编辑已移除，编辑跳转到独立页面 */}
     </Card>
   )
 }

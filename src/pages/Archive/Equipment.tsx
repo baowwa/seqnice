@@ -8,7 +8,6 @@ import {
   Form,
   Input,
   Select,
-  DatePicker,
   message,
   Popconfirm,
   Typography,
@@ -17,14 +16,15 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Equipment } from '../../types'
-import dayjs from 'dayjs'
+// 注：页面不涉及日期选择，移除 dayjs 依赖
 
 const { Title } = Typography
 const { Option } = Select
 
 /**
- * 设备管理组件
- * 提供设备的增删改查功能
+ * 设备档案管理页面组件
+ * 功能：提供设备档案的列表展示与新增/编辑（新增页字段按截图规范）
+ * 布局：新增/编辑表单采用“字段名在左、组件在右”的左右布局，避免上下堆叠
  */
 const EquipmentManagement: React.FC = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([])
@@ -42,12 +42,12 @@ const EquipmentManagement: React.FC = () => {
       manufacturer: 'Illumina',
       serialNumber: 'NS500001',
       location: '测序实验室A',
-      status: 'running',
-      purchaseDate: '2023-01-15',
-      warrantyExpiry: '2026-01-15',
+      status: 'in_use',
       lastMaintenance: '2024-01-10',
       nextMaintenance: '2024-04-10',
       specifications: {
+        equipmentCode: 'EQ-000001',
+        assetNo: 'AS-000001',
         throughput: '6 Tb',
         readLength: '2x150 bp',
         runTime: '13-44 hours'
@@ -62,12 +62,12 @@ const EquipmentManagement: React.FC = () => {
       manufacturer: 'Illumina',
       serialNumber: 'MS001234',
       location: '测序实验室B',
-      status: 'idle',
-      purchaseDate: '2022-06-20',
-      warrantyExpiry: '2025-06-20',
+      status: 'available',
       lastMaintenance: '2024-01-05',
       nextMaintenance: '2024-04-05',
       specifications: {
+        equipmentCode: 'EQ-000002',
+        assetNo: 'AS-000002',
         throughput: '15 Gb',
         readLength: '2x300 bp',
         runTime: '4-55 hours'
@@ -83,11 +83,11 @@ const EquipmentManagement: React.FC = () => {
       serialNumber: 'AB350001',
       location: '分子实验室',
       status: 'maintenance',
-      purchaseDate: '2021-03-10',
-      warrantyExpiry: '2024-03-10',
       lastMaintenance: '2024-01-20',
       nextMaintenance: '2024-04-20',
       specifications: {
+        equipmentCode: 'EQ-000003',
+        assetNo: 'AS-000003',
         capillaries: '8',
         readLength: '900 bp',
         runTime: '1-3 hours'
@@ -102,12 +102,12 @@ const EquipmentManagement: React.FC = () => {
       manufacturer: 'Thermo Fisher',
       serialNumber: 'IT550001',
       location: '测序实验室C',
-      status: 'error',
-      purchaseDate: '2023-08-15',
-      warrantyExpiry: '2026-08-15',
+      status: 'offline',
       lastMaintenance: '2024-01-15',
       nextMaintenance: '2024-04-15',
       specifications: {
+        equipmentCode: 'EQ-000004',
+        assetNo: 'AS-000004',
         throughput: '50 Gb',
         readLength: '600 bp',
         runTime: '2-7 hours'
@@ -135,23 +135,42 @@ const EquipmentManagement: React.FC = () => {
 
   /**
    * 保存设备信息
-   * @param values 表单数据
+   * @param values 表单数据（新增页字段）
+   * @returns void 无返回值
    */
   const handleSave = async (values: any) => {
     try {
-      const formattedValues = {
-        ...values,
-        purchaseDate: values.purchaseDate?.format('YYYY-MM-DD'),
-        warrantyExpiry: values.warrantyExpiry?.format('YYYY-MM-DD'),
-        lastMaintenance: values.lastMaintenance?.format('YYYY-MM-DD'),
-        nextMaintenance: values.nextMaintenance?.format('YYYY-MM-DD'),
+      /**
+       * 将新增页字段映射到设备列表使用的数据结构
+       * 设备名称/型号/品牌/序列号映射到现有字段；启用状态映射到状态
+       * 服务器相关信息与资产编号、设备编码存储在 specifications 中
+       */
+      const mapped = {
+        name: values.equipment_name,
+        model: values.instrument_model,
+        manufacturer: values.brand_no,
+        serialNumber: values.sn,
+        // 未提供位置字段，保持原值或设为“未填写”
+        location: editingEquipment?.location || '未填写',
+        // 启用：in_use；停用：offline
+        status: (values.enable_status === 1 ? 'in_use' : 'offline') as Equipment['status'],
+        specifications: {
+          equipmentCode: values.equipment_code,
+          assetNo: values.asset_no,
+          server: {
+            ip: values.equipment_server_ip,
+            port: values.equipment_server_port,
+            username: values.equipment_server_username,
+            password: values.equipment_server_passwd,
+          }
+        }
       }
 
       if (editingEquipment) {
         // 编辑模式
         const updatedEquipment = {
           ...editingEquipment,
-          ...formattedValues,
+          ...mapped,
           updatedAt: new Date().toISOString().split('T')[0]
         }
         setEquipment(prev => 
@@ -162,8 +181,7 @@ const EquipmentManagement: React.FC = () => {
         // 新增模式
         const newEquipment: Equipment = {
           id: Date.now().toString(),
-          ...formattedValues,
-          specifications: formattedValues.specifications || {},
+          ...mapped,
           createdAt: new Date().toISOString().split('T')[0],
           updatedAt: new Date().toISOString().split('T')[0]
         }
@@ -195,15 +213,26 @@ const EquipmentManagement: React.FC = () => {
   /**
    * 打开编辑模态框
    * @param item 要编辑的设备
+   * @returns void 无返回值
    */
   const handleEdit = (item: Equipment) => {
     setEditingEquipment(item)
+    /**
+     * 编辑态回填：将现有设备字段映射回新增表单字段
+     */
     const formValues = {
-      ...item,
-      purchaseDate: item.purchaseDate ? dayjs(item.purchaseDate) : null,
-      warrantyExpiry: item.warrantyExpiry ? dayjs(item.warrantyExpiry) : null,
-      lastMaintenance: item.lastMaintenance ? dayjs(item.lastMaintenance) : null,
-      nextMaintenance: item.nextMaintenance ? dayjs(item.nextMaintenance) : null,
+      equipment_code: (item as any)?.specifications?.equipmentCode || '',
+      equipment_name: item.name || '',
+      brand_no: item.manufacturer || '',
+      instrument_model: item.model || '',
+      asset_no: (item as any)?.specifications?.assetNo || '',
+      sn: item.serialNumber || '',
+      // in_use/available 视为启用，maintenance/offline 视为停用
+      enable_status: ['in_use', 'available'].includes(item.status as any) ? 1 : 0,
+      equipment_server_ip: (item as any)?.specifications?.server?.ip || '',
+      equipment_server_port: (item as any)?.specifications?.server?.port || '',
+      equipment_server_username: (item as any)?.specifications?.server?.username || '',
+      equipment_server_passwd: (item as any)?.specifications?.server?.password || '',
     }
     form.setFieldsValue(formValues)
     setModalVisible(true)
@@ -222,12 +251,17 @@ const EquipmentManagement: React.FC = () => {
    * 获取状态标签颜色
    * @param status 设备状态
    */
-  const getStatusColor = (status: string) => {
+  /**
+   * 获取状态标签颜色
+   * 入参：status 设备状态（available/in_use/maintenance/offline）
+   * 出参：颜色字符串
+   */
+  const getStatusColor = (status: Equipment['status']) => {
     switch (status) {
-      case 'running': return 'green'
-      case 'idle': return 'blue'
+      case 'in_use': return 'green'
+      case 'available': return 'blue'
       case 'maintenance': return 'orange'
-      case 'error': return 'red'
+      case 'offline': return 'red'
       default: return 'default'
     }
   }
@@ -236,81 +270,80 @@ const EquipmentManagement: React.FC = () => {
    * 获取状态文本
    * @param status 设备状态
    */
-  const getStatusText = (status: string) => {
+  /**
+   * 获取状态中文文案
+   * 入参：status 设备状态（available/in_use/maintenance/offline）
+   * 出参：中文描述
+   */
+  const getStatusText = (status: Equipment['status']) => {
     switch (status) {
-      case 'running': return '运行中'
-      case 'idle': return '空闲'
+      case 'in_use': return '运行中'
+      case 'available': return '空闲'
       case 'maintenance': return '维护中'
-      case 'error': return '故障'
+      case 'offline': return '停用'
       default: return '未知'
     }
   }
 
-  // 表格列定义
+  /**
+   * 表格列定义（按需求调整）
+   * 字段：设备编码、设备名称、品牌、型号、资产编号、序列号、状态
+   */
   const columns: ColumnsType<Equipment> = [
+    {
+      title: '设备编码',
+      key: 'equipment_code',
+      width: 140,
+      render: (_, record) => (record as any)?.specifications?.equipmentCode ?? '-',
+      fixed: 'left',
+    },
     {
       title: '设备名称',
       dataIndex: 'name',
       key: 'name',
-      width: 150,
+      width: 180,
+      fixed: 'left',
+    },
+    {
+      title: '品牌',
+      dataIndex: 'manufacturer',
+      key: 'manufacturer',
+      width: 140,
     },
     {
       title: '型号',
       dataIndex: 'model',
       key: 'model',
-      width: 120,
+      width: 140,
     },
     {
-      title: '制造商',
-      dataIndex: 'manufacturer',
-      key: 'manufacturer',
-      width: 120,
+      title: '资产编号',
+      key: 'asset_no',
+      width: 140,
+      render: (_, record) => (record as any)?.specifications?.assetNo ?? '-',
     },
     {
       title: '序列号',
       dataIndex: 'serialNumber',
       key: 'serialNumber',
-      width: 120,
-    },
-    {
-      title: '位置',
-      dataIndex: 'location',
-      key: 'location',
-      width: 120,
+      width: 140,
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status: string) => (
+      render: (status: Equipment['status']) => (
         <Tag color={getStatusColor(status)}>
           {getStatusText(status)}
         </Tag>
       ),
     },
     {
-      title: '购买日期',
-      dataIndex: 'purchaseDate',
-      key: 'purchaseDate',
-      width: 100,
-    },
-    {
-      title: '保修到期',
-      dataIndex: 'warrantyExpiry',
-      key: 'warrantyExpiry',
-      width: 100,
-    },
-    {
-      title: '下次维护',
-      dataIndex: 'nextMaintenance',
-      key: 'nextMaintenance',
-      width: 100,
-    },
-    {
       title: '操作',
       key: 'action',
       width: 120,
+      fixed: 'right',
       render: (_, record) => (
         <Space size="small">
           <Button
@@ -348,7 +381,7 @@ const EquipmentManagement: React.FC = () => {
   return (
     <div>
       <Title level={3} style={{ marginBottom: 24 }}>
-        设备管理
+        设备档案
       </Title>
       
       <Card className="content-card">
@@ -374,7 +407,7 @@ const EquipmentManagement: React.FC = () => {
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 'max-content' }}
         />
       </Card>
 
@@ -391,117 +424,66 @@ const EquipmentManagement: React.FC = () => {
       >
         <Form
           form={form}
-          layout="vertical"
+          layout="horizontal"
+          labelAlign="right"
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 16 }}
           onFinish={handleSave}
         >
-          <Form.Item
-            name="name"
-            label="设备名称"
-            rules={[{ required: true, message: '请输入设备名称' }]}
-          >
-            <Input placeholder="请输入设备名称" />
+          {/* 基本信息 */}
+          <Form.Item name="equipment_code" label="设备编码" rules={[{ required: true, message: '请输入设备编码' }]}> 
+            <Input placeholder="例如：EQP-00001" />
           </Form.Item>
-
-          <Form.Item
-            name="model"
-            label="设备型号"
-            rules={[{ required: true, message: '请输入设备型号' }]}
-          >
-            <Input placeholder="请输入设备型号" />
+          <Form.Item name="equipment_name" label="设备名称" rules={[{ required: true, message: '请输入设备名称' }]}> 
+            <Input placeholder="例如：Illumina NovaSeq 6000" />
           </Form.Item>
-
-          <Form.Item
-            name="manufacturer"
-            label="制造商"
-            rules={[{ required: true, message: '请输入制造商' }]}
-          >
-            <Input placeholder="请输入制造商" />
+          <Form.Item name="brand_no" label="品牌"> 
+            <Input placeholder="例如：Illumina" />
           </Form.Item>
-
-          <Form.Item
-            name="serialNumber"
-            label="序列号"
-            rules={[{ required: true, message: '请输入序列号' }]}
-          >
-            <Input placeholder="请输入序列号" />
+          <Form.Item name="instrument_model" label="型号"> 
+            <Input placeholder="例如：NovaSeq 6000" />
           </Form.Item>
-
-          <Form.Item
-            name="location"
-            label="设备位置"
-            rules={[{ required: true, message: '请输入设备位置' }]}
-          >
-            <Input placeholder="请输入设备位置" />
+          <Form.Item name="asset_no" label="资产编号"> 
+            <Input placeholder="例如：ASSET-0001" />
           </Form.Item>
-
-          <Form.Item
-            name="status"
-            label="设备状态"
-            rules={[{ required: true, message: '请选择设备状态' }]}
-          >
-            <Select placeholder="请选择设备状态">
-              <Option value="running">运行中</Option>
-              <Option value="idle">空闲</Option>
-              <Option value="maintenance">维护中</Option>
-              <Option value="error">故障</Option>
+          <Form.Item name="sn" label="序列号"> 
+            <Input placeholder="例如：NS500001" />
+          </Form.Item>
+          <Form.Item name="enable_status" label="状态" rules={[{ required: true, message: '请选择启用状态' }]}>
+            <Select placeholder="请选择">
+              <Option value={1}>启用</Option>
+              <Option value={0}>停用</Option>
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="purchaseDate"
-            label="购买日期"
-            rules={[{ required: true, message: '请选择购买日期' }]}
-          >
-            <DatePicker 
-              placeholder="请选择购买日期" 
-              style={{ width: '100%' }}
-            />
+          {/* 服务器信息 */}
+          <Form.Item name="equipment_server_ip" label="服务器ip">
+            <Input placeholder="例如：192.168.1.100" />
+          </Form.Item>
+          <Form.Item name="equipment_server_port" label="服务器端口">
+            <Input placeholder="例如：8080" />
+          </Form.Item>
+          <Form.Item name="equipment_server_username" label="服务器用户名">
+            <Input placeholder="例如：admin" />
+          </Form.Item>
+          <Form.Item name="equipment_server_passwd" label="服务器密码">
+            <Input.Password placeholder="请输入服务器密码" />
           </Form.Item>
 
-          <Form.Item
-            name="warrantyExpiry"
-            label="保修到期日期"
-          >
-            <DatePicker 
-              placeholder="请选择保修到期日期" 
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="lastMaintenance"
-            label="上次维护日期"
-          >
-            <DatePicker 
-              placeholder="请选择上次维护日期" 
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="nextMaintenance"
-            label="下次维护日期"
-          >
-            <DatePicker 
-              placeholder="请选择下次维护日期" 
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit">
-                保存
-              </Button>
-              <Button onClick={() => {
-                setModalVisible(false)
-                setEditingEquipment(null)
-                form.resetFields()
-              }}>
-                取消
-              </Button>
-            </Space>
-          </Form.Item>
+        <Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit">
+              保存
+            </Button>
+            <Button onClick={() => {
+              setModalVisible(false)
+              setEditingEquipment(null)
+              form.resetFields()
+            }}>
+              取消
+            </Button>
+          </Space>
+        </Form.Item>
         </Form>
       </Modal>
     </div>
